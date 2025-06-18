@@ -54,14 +54,25 @@ def ParseNames(dataFrame, indexRow, indexCol, employeeTotal):
 
 
 def ParseSSN(dataFrame, indexRow, indexCol, employeeTotal):
-    ssns = []
+    output = []
     for i in range(employeeTotal):
         data =  {
             "employee_ssn": dataFrame.iloc[indexRow+1+3*i, indexCol],
         }
-        ssns.append(data)
+        output.append(data)
 
-    return ssns
+    return output
+
+
+def ParseClassification(dataFrame, indexRow, indexCol, employeeTotal):
+    output = []
+    for i in range(employeeTotal):
+        data =  {
+            "work_classification": dataFrame.iloc[indexRow+1+3*i, indexCol],
+        }
+        output.append(data)
+
+    return output
 
 
 
@@ -73,6 +84,8 @@ def HandleEmployees(cell, indexRow, indexCol, dataFrame, employees):
         employeeData = ParseNames(dataFrame, indexRow, indexCol, employeeTotal)
     elif cell == "SSN":
         employeeData = ParseSSN(dataFrame, indexRow, indexCol, employeeTotal)
+    elif cell == "Classification":
+        employeeData = ParseClassification(dataFrame, indexRow, indexCol, employeeTotal)
 
     if employeeData:
         for i in range(employeeTotal):
@@ -108,8 +121,8 @@ def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
 
 def parse_cpr_excel(file_path):
     dataFrame = pd.read_excel(file_path, engine='openpyxl', header=None)
-    with open("output_logs/dataframe.txt", "w") as f:
-        f.write(dataFrame.to_string(index=True))
+    with open("output_logs/DataFrame.txt", "w") as outputFrame:
+        outputFrame.write(dataFrame.to_string(index=True))
 
     header = []
     employees = []
@@ -130,13 +143,17 @@ def parse_cpr_excel(file_path):
                 HandleEmployees(cell, indexRow, indexCol, dataFrame, employees)
 
     
-    for x in header:
-        print(x)
+    with open("output_logs/DataParsed.txt", "w") as outputParsed:
+        outputParsed.write("== HEADER ==\n")
+        outputParsed.write(json.dumps(header, indent=2))
+        outputParsed.write("\n\n")
 
-    for y in employees:
-        print(y)
+        # Write employees (list or dict ooutputParsed records)
+        outputParsed.write("== EMPLOYEES ==\n")
+        outputParsed.write(json.dumps(employees, indent=2))
 
-    return dataFrame
+
+    return dataFrame, header, employees
 
 
 
@@ -144,7 +161,7 @@ def parse_cpr_excel(file_path):
 
 if __name__ == "__main__":
     path = ".\data\CP #16 ending 7.6.24.xlsx"
-    parsed_data = parse_cpr_excel(path)
+    frame, header, body = parse_cpr_excel(path)
 
     #print(parsed_data)
 
