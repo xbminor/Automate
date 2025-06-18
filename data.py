@@ -4,7 +4,6 @@ import json
 
 
 
-
 def ParseContractor(dataFrame, indexRow, indexCol):
     data =  {
         "contractor_name": dataFrame.iloc[indexRow, indexCol+2],
@@ -14,6 +13,7 @@ def ParseContractor(dataFrame, indexRow, indexCol):
 
     return data
 
+
 def ParseProject(dataFrame, indexRow, indexCol):
     data =  {
         "project_name": dataFrame.iloc[indexRow, indexCol+1],
@@ -21,12 +21,14 @@ def ParseProject(dataFrame, indexRow, indexCol):
 
     return data
 
+
 def ParsePayrollNumber(dataFrame, indexRow, indexCol):
     data =  {
         "payroll_number": dataFrame.iloc[indexRow, indexCol+3],
     }
 
     return data
+
 
 def ParseWeekEnding(dataFrame, indexRow, indexCol):
     data =  {
@@ -37,79 +39,80 @@ def ParseWeekEnding(dataFrame, indexRow, indexCol):
 
 
 
-def HandleHeader(cell, indexRow, indexCol, dataFrame):
-    cell = cell.strip()
-    output = False
-    if cell == "Contractor":
-        output = ParseContractor(dataFrame, indexRow, indexCol)
-    elif cell == "Project":
-        output = ParseProject(dataFrame, indexRow, indexCol)
-    elif cell == "Payroll Number":
-        output = ParsePayrollNumber(dataFrame, indexRow, indexCol)
-    elif cell == "For Week Ending":
-        output = ParseWeekEnding(dataFrame, indexRow, indexCol)
 
-
-    if output: print(output)
-
-    return
-
-
-
-
-
-def ParseNames(dataFrame, indexRow, indexCol):
-    totalNames = int((len(dataFrame)-indexRow-1)/3)
-
-    employees = {}
-    for i in range(totalNames):
-        employee = {
+def ParseNames(dataFrame, indexRow, indexCol, employeeTotal):
+    names = []
+    for i in range(employeeTotal):
+        data = {
             "employee_name": dataFrame.iloc[indexRow+1+3*i, indexCol],
             "employee_address1": dataFrame.iloc[indexRow+2+3*i, indexCol],
             "employee_address2": dataFrame.iloc[indexRow+3+3*i, indexCol],
         }
-        print(employee)
+        names.append(data)
 
-        employees[employee["employee_name"]] = employee
-
-    return employees
+    return names
 
 
+def ParseSSN(dataFrame, indexRow, indexCol, employeeTotal):
+    ssns = []
+    for i in range(employeeTotal):
+        data =  {
+            "employee_ssn": dataFrame.iloc[indexRow+1+3*i, indexCol],
+        }
+        ssns.append(data)
 
-def ParseSSN(dataFrame, indexRow, indexCol):
-    data =  {
-        "employee_ssn": dataFrame.iloc[indexRow+1, indexCol],
-    }
-
-    return data
+    return ssns
 
 
 
-def HandleEmployees(cell, indexRow, indexCol, dataFrame):
-    cell = cell.strip()
-    output = False
+
+def HandleEmployees(cell, indexRow, indexCol, dataFrame, employees):
+    employeeTotal = int((len(dataFrame)-8)/3)
+    employeeData = None
     if cell == "Employee Name":
-        output = ParseNames(dataFrame, indexRow, indexCol)
+        employeeData = ParseNames(dataFrame, indexRow, indexCol, employeeTotal)
     elif cell == "SSN":
-        output = ParseSSN(dataFrame, indexRow, indexCol)
+        employeeData = ParseSSN(dataFrame, indexRow, indexCol, employeeTotal)
 
+    if employeeData:
+        for i in range(employeeTotal):
+            while len(employees) <= i:
+                employees.append({})
 
-    if output: print(output)
+            employees[i].update(employeeData[i])
 
     return
 
+
+def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
+    headerData = None
+    if cell == "Contractor":
+        headerData = ParseContractor(dataFrame, indexRow, indexCol)
+    elif cell == "Project":
+        headerData = ParseProject(dataFrame, indexRow, indexCol)
+    elif cell == "Payroll Number":
+        headerData = ParsePayrollNumber(dataFrame, indexRow, indexCol)
+    elif cell == "For Week Ending":
+        headerData = ParseWeekEnding(dataFrame, indexRow, indexCol)
+
+    if headerData:
+        while len(header) <= 0:
+                header.append({})
+
+        header[0].update(headerData)
+
+    return
 
 
 
 
 def parse_cpr_excel(file_path):
-    # Load the file raw to search for where the table starts
     dataFrame = pd.read_excel(file_path, engine='openpyxl', header=None)
     with open("output_logs/dataframe.txt", "w") as f:
         f.write(dataFrame.to_string(index=True))
 
-
-    # Compare cell to neighbor on the left
+    header = []
+    employees = []
     for indexRow in range(0, len(dataFrame)):
         for indexCol in range(0, len(dataFrame.columns)):
             cell = dataFrame.iloc[indexRow, indexCol]
@@ -119,13 +122,20 @@ def parse_cpr_excel(file_path):
 
             if not isinstance(cell, str):
                 continue
-
-            if indexRow < 7:
-                HandleHeader(cell, indexRow, indexCol, dataFrame)
-            elif indexRow >= 7:
-                HandleEmployees(cell, indexRow, indexCol, dataFrame)
-
                 
+            cell = cell.strip()
+            if indexRow < 7:
+                HandleHeader(cell, indexRow, indexCol, dataFrame, header)
+            elif indexRow >= 7:
+                HandleEmployees(cell, indexRow, indexCol, dataFrame, employees)
+
+    
+    for x in header:
+        print(x)
+
+    for y in employees:
+        print(y)
+
     return dataFrame
 
 
