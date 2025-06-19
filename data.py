@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import os
 
 
 
@@ -109,22 +110,20 @@ def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
         headerData = ParseWeekEnding(dataFrame, indexRow, indexCol)
 
     if headerData:
-        while len(header) <= 0:
-                header.append({})
-
-        header[0].update(headerData)
+        header.update(headerData)
 
     return
 
 
 
 
-def parse_cpr_excel(file_path):
+def parse_cpr_excel(file_path, sheet):
     dataFrame = pd.read_excel(file_path, engine='openpyxl', header=None)
-    with open("output_logs/DataFrame.txt", "w") as outputFrame:
+    outputName = f"output_logs/Data_{sheet}.txt"
+    with open(outputName, "w") as outputFrame:
         outputFrame.write(dataFrame.to_string(index=True))
 
-    header = []
+    header = {}
     employees = []
     for indexRow in range(0, len(dataFrame)):
         for indexCol in range(0, len(dataFrame.columns)):
@@ -142,16 +141,6 @@ def parse_cpr_excel(file_path):
             elif indexRow >= 7:
                 HandleEmployees(cell, indexRow, indexCol, dataFrame, employees)
 
-    
-    with open("output_logs/DataParsed.txt", "w") as outputParsed:
-        outputParsed.write("== HEADER ==\n")
-        outputParsed.write(json.dumps(header, indent=2))
-        outputParsed.write("\n\n")
-
-        # Write employees (list or dict ooutputParsed records)
-        outputParsed.write("== EMPLOYEES ==\n")
-        outputParsed.write(json.dumps(employees, indent=2))
-
 
     return dataFrame, header, employees
 
@@ -160,13 +149,30 @@ def parse_cpr_excel(file_path):
 
 
 if __name__ == "__main__":
-    path = ".\data\CP #16 ending 7.6.24.xlsx"
-    frame, header, body = parse_cpr_excel(path)
+    dataFolderPath = r".\data"
+    os.makedirs("output_logs", exist_ok=True)
 
-    #print(parsed_data)
+    os.listdir(dataFolderPath)
+    excelFiles = [file for file in os.listdir(dataFolderPath) if file.endswith(".xlsx")]
+    
+    for sheet in excelFiles:
+        path = os.path.join(dataFolderPath, sheet)
 
-    # # Save as JSON
-    # with open("employee_data.json", "w") as f:
-    #     json.dump(parsed_data, f, indent=2)
 
-    # print(f"Parsed {len(parsed_data)} employees from CPR Excel.")
+        try:
+            frame, header, employees = parse_cpr_excel(path, sheet)
+            print(f"Parsed {len(employees)} employees from {sheet}")
+        except Exception as e:
+            print(f"Failed to parse {sheet}: {e}")
+            continue
+
+
+        outputName = f"output_logs/Parsed_{sheet}.txt"
+        with open(outputName, "w") as outputParsed:
+            outputParsed.write("== HEADER ==\n")
+            outputParsed.write(json.dumps(header, indent=2))
+            outputParsed.write("\n\n")
+
+            # Write employees (list or dict ooutputParsed records)
+            outputParsed.write("== EMPLOYEES ==\n")
+            outputParsed.write(json.dumps(employees, indent=2))
