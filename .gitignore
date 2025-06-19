@@ -1,3 +1,6 @@
 node_modules/
 data/
 output_logs/
+videos/
+
+config.json
