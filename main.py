@@ -1,5 +1,6 @@
 import re
 import json
+import utils.browser_tools as bUtils
 from playwright.sync_api import Playwright, sync_playwright, expect
 
 
@@ -24,18 +25,8 @@ def run(playwright: Playwright) -> None:
     page = context.new_page()
     page.goto("https://services.dir.ca.gov/gsp")
 
-    page.get_by_role("link", name="Log in").click()
-    page.get_by_role("textbox", name="User name / Email").fill(USERNAME)
-    page.get_by_role("textbox", name="Password").fill(PASSWORD)
-    page.get_by_role("button", name="Log in").click()
-
-    #page.get_by_role("link", name="Jeff Burns, Jeff Burns").click()
-
-    try:
-        page.get_by_role("button", name="Dismiss announcement").click(timeout=10000)
-        print("Announcment Dismissed...")
-    except:
-        print("Announcment Not Found...")
+    bUtils.Login(page, USERNAME, PASSWORD)
+    bUtils.DismissAnnoucement(page)
 
     isValidDir = False
     validDirCount = 0
@@ -95,6 +86,9 @@ def run(playwright: Playwright) -> None:
     
 
     page.wait_for_timeout(2000)
+
+
+    payrollTable = page.get_by_role("table", name="Payroll Runs")
 
 
 
