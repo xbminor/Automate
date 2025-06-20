@@ -10,7 +10,11 @@ with open(r".\config.json", "r") as configFile:
 USERNAME = config["username"]
 PASSWORD = config["password"]
 DIR = config["dir"]
-USER_FIRST_LAST = config["user_first_last"]
+PAY1 = config["pay1"]
+PAY2 = config["pay2"]
+PAY3 = config["pay3"]
+PAY4 = config["pay4"]
+PAY5 = config["pay5"]
 
 
 
@@ -27,10 +31,9 @@ def run(playwright: Playwright) -> None:
 
     Auto.Login(page, USERNAME, PASSWORD)
     Auto.DismissAnnoucement(page)
-
     Auto.SearchMyProjects(page, DIR, True)
 
-    
+    Auto.Payroll(page, PAY3)
 
   
 

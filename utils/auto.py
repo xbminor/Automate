@@ -1,3 +1,4 @@
+import re
 from playwright.sync_api import Page, TimeoutError, expect, Locator
 
 def Login(page: Page, username: str, password: str) -> bool:
@@ -70,3 +71,26 @@ def SearchMyProjects(page: Page, searchValue: str, isViewOnSearchComplete: bool)
     except Exception as e:
         print("Search failed:", e)
         return None
+    
+
+
+def Payroll(page: Page, payrollNum: str) -> bool:
+    try:
+        # page.locator("button").filter(has_text="Submit Manual eCPR").click()
+
+        print("Searching for", payrollNum)
+        payrollTable = page.get_by_role("table", name="Payroll Runs")
+        matchingRow = payrollTable.locator("tr", has=page.get_by_role("rowheader", name=payrollNum))
+
+        matchingRow.get_by_role("button", name="Open eCPR", exact=True).click()
+
+        # Find the element that contains text matching "Payroll ID PRRUN..."
+        payrollIDLocator = page.get_by_text(re.compile(r"Payroll ID PRRUN\d+"))
+        text = payrollIDLocator.text_content().strip()
+        print(text)
+
+        return True
+    
+    except Exception as e:
+        print("Payroll failed:", e)
+        return False
