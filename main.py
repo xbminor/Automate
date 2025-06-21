@@ -10,9 +10,10 @@ pathFolderOutData = r".\data_output"
 pathFolderLogParser = r".\log_parser"
 pathFolderLogAutomate = r".\log_automate"
 
-os.makedirs(pathFolderOutData, exist_ok=True)
 os.makedirs(pathFolderLogParser, exist_ok=True)
 os.makedirs(pathFolderLogAutomate, exist_ok=True)
+os.makedirs(f"{pathFolderOutData}_frame", exist_ok=True)
+os.makedirs(f"{pathFolderOutData}_parse", exist_ok=True)
 
 timeStamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -71,5 +72,5 @@ def run(playwright: Playwright) -> None:
 
 
 
-# with sync_playwright() as playwright:
-#     run(playwright)
+with sync_playwright() as playwright:
+    run(playwright)

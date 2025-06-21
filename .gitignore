@@ -1,8 +1,8 @@
 node_modules/
-data_input/
-data_output/
-log_parser/
-log_automate/
+data_*
+log_*
 videos/
+
+__pycache__/
 
 config.json

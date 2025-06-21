@@ -120,7 +120,7 @@ def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
 def parse_cpr_excel(sheet, pathInputSheet, pathOutputData):
     dataFrame = pd.read_excel(pathInputSheet, engine='openpyxl', header=None)
 
-    with open(os.path.join(pathOutputData, f"Frame_{sheet}.txt"), "w") as outputFrame:
+    with open(os.path.join(f"{pathOutputData}_frame", f"Frame_{sheet}.txt"), "w") as outputFrame:
         outputFrame.write(dataFrame.to_string(index=True))
 
     header = {}
@@ -157,6 +157,9 @@ def CPRxlsxBulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  path
             print(f"Failed to parse {sheet}: {e}")
             continue
 
-        with open(os.path.join(pathOutputData, f"Parsed_{sheet}.json"), "w") as parsedCPR:
-            parsedCPR.write(json.dumps(header, indent=2))
-            parsedCPR.write(json.dumps(employees, indent=2))
+        parsedData = {
+            "header": header,
+            "employees": employees
+}
+        with open(os.path.join(f"{pathOutputData}_parse", f"Parsed_{sheet}.json"), "w") as parsedCPR:
+            json.dump(parsedData, parsedCPR, indent=2, ensure_ascii=False)
