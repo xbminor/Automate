@@ -1,7 +1,16 @@
 import re
+import os
 import json
 import utils.auto as Auto
+from datetime import datetime
 from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+timeStamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+logName = f"Log_Auto_{timeStamp}.txt"
+LOG_AUTO_PATH = os.path.join(r".\output_logs", logName)
+with open(LOG_AUTO_PATH, "w", encoding="utf-8") as file:
+    file.write(f"### ******************* Auto.py Log - {timeStamp} ******************* ###\n\n")
 
 
 with open(r".\config.json", "r") as configFile: 
@@ -29,11 +38,11 @@ def run(playwright: Playwright) -> None:
     page = context.new_page()
     page.goto("https://services.dir.ca.gov/gsp")
 
-    Auto.Login(page, USERNAME, PASSWORD)
-    Auto.DismissAnnoucement(page)
-    Auto.SearchMyProjects(page, DIR, True)
+    Auto.Login(page, USERNAME, PASSWORD, LOG_AUTO_PATH)
+    Auto.DismissAnnoucement(page, LOG_AUTO_PATH)
+    Auto.ProjectSearchDirToView(page, DIR, LOG_AUTO_PATH)
 
-    Auto.Payroll(page, PAY3)
+    Auto.PayrollIndexIdToOpen(page, PAY3, LOG_AUTO_PATH)
 
   
 
