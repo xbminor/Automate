@@ -2,14 +2,12 @@ import re
 from datetime import datetime
 from playwright.sync_api import Page, TimeoutError, expect, Locator
 
+
 STATUS_CODES= {
     0: "PASS",
     1: "ERROR",
     2: "LOG",
-    3: "TASK",
-    4: "INVALID",
 }
-
 
 
 def LogToFile(status: int, msg: str, filePath: str, isPrint: bool):
@@ -22,6 +20,7 @@ def LogToFile(status: int, msg: str, filePath: str, isPrint: bool):
     
     if isPrint:
         print(log)
+
 
 def Login(page: Page, username: str, password: str, logPath: str) -> bool:
     try:
@@ -48,7 +47,6 @@ def Login(page: Page, username: str, password: str, logPath: str) -> bool:
         LogToFile(1, msg, logPath, True)
         return False
     
-
 
 def DismissAnnoucement(page: Page, logPath: str) -> bool:
     try:
@@ -102,7 +100,7 @@ def ProjectSearchDirToView(page: Page, dir: str, logPath: str) -> Locator:
         return None
 
 
- # page.locator("button").filter(has_text="Submit Manual eCPR").click()
+# page.locator("button").filter(has_text="Submit Manual eCPR").click()
 def PayrollIndexIdToOpen(page: Page, id: str, logPath: str) -> bool:
     try:
         id = id.strip()

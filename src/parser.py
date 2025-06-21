@@ -117,10 +117,10 @@ def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
 
 
 
-def parse_cpr_excel(file_path, sheet):
-    dataFrame = pd.read_excel(file_path, engine='openpyxl', header=None)
-    outputName = f"output_logs/Data_{sheet}.txt"
-    with open(outputName, "w") as outputFrame:
+def parse_cpr_excel(sheet, pathInputSheet, pathOutputData):
+    dataFrame = pd.read_excel(pathInputSheet, engine='openpyxl', header=None)
+
+    with open(os.path.join(pathOutputData, f"Frame_{sheet}.txt"), "w") as outputFrame:
         outputFrame.write(dataFrame.to_string(index=True))
 
     header = {}
@@ -145,34 +145,18 @@ def parse_cpr_excel(file_path, sheet):
     return dataFrame, header, employees
 
 
-
-
-
-if __name__ == "__main__":
-    dataFolderPath = r".\data"
-    os.makedirs("output_logs", exist_ok=True)
-
-    os.listdir(dataFolderPath)
-    excelFiles = [file for file in os.listdir(dataFolderPath) if file.endswith(".xlsx")]
-    
-    for sheet in excelFiles:
-        path = os.path.join(dataFolderPath, sheet)
+def CPRxlsxBulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
+    for sheet in xlsxSheets:
+        pathInputSheet = os.path.join(pathInputData, sheet)
 
 
         try:
-            frame, header, employees = parse_cpr_excel(path, sheet)
+            frame, header, employees = parse_cpr_excel(sheet, pathInputSheet, pathOutputData)
             print(f"Parsed {len(employees)} employees from {sheet}")
         except Exception as e:
             print(f"Failed to parse {sheet}: {e}")
             continue
 
-
-        outputName = f"output_logs/Parsed_{sheet}.txt"
-        with open(outputName, "w") as outputParsed:
-            outputParsed.write("== HEADER ==\n")
-            outputParsed.write(json.dumps(header, indent=2))
-            outputParsed.write("\n\n")
-
-            # Write employees (list or dict ooutputParsed records)
-            outputParsed.write("== EMPLOYEES ==\n")
-            outputParsed.write(json.dumps(employees, indent=2))
+        with open(os.path.join(pathOutputData, f"Parsed_{sheet}.json"), "w") as parsedCPR:
+            parsedCPR.write(json.dumps(header, indent=2))
+            parsedCPR.write(json.dumps(employees, indent=2))

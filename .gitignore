@@ -1,6 +1,8 @@
 node_modules/
-data/
-output_logs/
+data_input/
+data_output/
+log_parser/
+log_automate/
 videos/
 
 config.json
