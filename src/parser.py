@@ -1,3 +1,4 @@
+import src.util as Util
 import pandas as pd
 import json
 import os
@@ -5,7 +6,7 @@ import os
 
 
 
-def ParseContractor(dataFrame, indexRow, indexCol):
+def _extract_header_contractor(dataFrame, indexRow, indexCol):
     data =  {
         "contractor_name": dataFrame.iloc[indexRow, indexCol+2],
         "contractor_address1": dataFrame.iloc[indexRow+1, indexCol+2],
@@ -15,7 +16,7 @@ def ParseContractor(dataFrame, indexRow, indexCol):
     return data
 
 
-def ParseProject(dataFrame, indexRow, indexCol):
+def _extract_header_project(dataFrame, indexRow, indexCol):
     data =  {
         "project_name": dataFrame.iloc[indexRow, indexCol+1],
     }
@@ -23,7 +24,7 @@ def ParseProject(dataFrame, indexRow, indexCol):
     return data
 
 
-def ParsePayrollNumber(dataFrame, indexRow, indexCol):
+def _extract_header_payroll_number(dataFrame, indexRow, indexCol):
     data =  {
         "payroll_number": dataFrame.iloc[indexRow, indexCol+3],
     }
@@ -31,7 +32,7 @@ def ParsePayrollNumber(dataFrame, indexRow, indexCol):
     return data
 
 
-def ParseWeekEnding(dataFrame, indexRow, indexCol):
+def _extract_header_week_ending(dataFrame, indexRow, indexCol):
     data =  {
         "week_ending": dataFrame.iloc[indexRow, indexCol+3].date().isoformat(),
     }
@@ -41,7 +42,7 @@ def ParseWeekEnding(dataFrame, indexRow, indexCol):
 
 
 
-def ParseNames(dataFrame, indexRow, indexCol, employeeTotal):
+def _extract_employee_info(dataFrame, indexRow, indexCol, employeeTotal):
     names = []
     for i in range(employeeTotal):
         data = {
@@ -54,7 +55,7 @@ def ParseNames(dataFrame, indexRow, indexCol, employeeTotal):
     return names
 
 
-def ParseSSN(dataFrame, indexRow, indexCol, employeeTotal):
+def _extract_employee_social(dataFrame, indexRow, indexCol, employeeTotal):
     output = []
     for i in range(employeeTotal):
         data =  {
@@ -65,7 +66,7 @@ def ParseSSN(dataFrame, indexRow, indexCol, employeeTotal):
     return output
 
 
-def ParseClassification(dataFrame, indexRow, indexCol, employeeTotal):
+def _extract_employee_work_class(dataFrame, indexRow, indexCol, employeeTotal):
     output = []
     for i in range(employeeTotal):
         data =  {
@@ -78,15 +79,15 @@ def ParseClassification(dataFrame, indexRow, indexCol, employeeTotal):
 
 
 
-def HandleEmployees(cell, indexRow, indexCol, dataFrame, employees):
+def _handle_employees(cell, indexRow, indexCol, dataFrame, employees):
     employeeTotal = int((len(dataFrame)-8)/3)
     employeeData = None
     if cell == "Employee Name":
-        employeeData = ParseNames(dataFrame, indexRow, indexCol, employeeTotal)
+        employeeData = _extract_employee_info(dataFrame, indexRow, indexCol, employeeTotal)
     elif cell == "SSN":
-        employeeData = ParseSSN(dataFrame, indexRow, indexCol, employeeTotal)
+        employeeData = _extract_employee_social(dataFrame, indexRow, indexCol, employeeTotal)
     elif cell == "Classification":
-        employeeData = ParseClassification(dataFrame, indexRow, indexCol, employeeTotal)
+        employeeData = _extract_employee_work_class(dataFrame, indexRow, indexCol, employeeTotal)
 
     if employeeData:
         for i in range(employeeTotal):
@@ -98,16 +99,16 @@ def HandleEmployees(cell, indexRow, indexCol, dataFrame, employees):
     return
 
 
-def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
+def _handle_header(cell, indexRow, indexCol, dataFrame, header):
     headerData = None
     if cell == "Contractor":
-        headerData = ParseContractor(dataFrame, indexRow, indexCol)
+        headerData = _extract_header_contractor(dataFrame, indexRow, indexCol)
     elif cell == "Project":
-        headerData = ParseProject(dataFrame, indexRow, indexCol)
+        headerData = _extract_header_project(dataFrame, indexRow, indexCol)
     elif cell == "Payroll Number":
-        headerData = ParsePayrollNumber(dataFrame, indexRow, indexCol)
+        headerData = _extract_header_payroll_number(dataFrame, indexRow, indexCol)
     elif cell == "For Week Ending":
-        headerData = ParseWeekEnding(dataFrame, indexRow, indexCol)
+        headerData = _extract_header_week_ending(dataFrame, indexRow, indexCol)
 
     if headerData:
         header.update(headerData)
@@ -117,7 +118,7 @@ def HandleHeader(cell, indexRow, indexCol, dataFrame, header):
 
 
 
-def parse_cpr_excel(sheet, pathInputSheet, pathOutputData):
+def parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData):
     dataFrame = pd.read_excel(pathInputSheet, engine='openpyxl', header=None)
 
     with open(os.path.join(f"{pathOutputData}_frame", f"Frame_{sheet}.txt"), "w") as outputFrame:
@@ -137,24 +138,25 @@ def parse_cpr_excel(sheet, pathInputSheet, pathOutputData):
                 
             cell = cell.strip()
             if indexRow < 7:
-                HandleHeader(cell, indexRow, indexCol, dataFrame, header)
+                _handle_header(cell, indexRow, indexCol, dataFrame, header)
             elif indexRow >= 7:
-                HandleEmployees(cell, indexRow, indexCol, dataFrame, employees)
+                _handle_employees(cell, indexRow, indexCol, dataFrame, employees)
 
 
     return dataFrame, header, employees
 
 
-def CPRxlsxBulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
+def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
     for sheet in xlsxSheets:
         pathInputSheet = os.path.join(pathInputData, sheet)
 
-
         try:
-            frame, header, employees = parse_cpr_excel(sheet, pathInputSheet, pathOutputData)
-            print(f"Parsed {len(employees)} employees from {sheet}")
+            frame, header, employees = parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData)
+            msg = f"<parse_cpr_xlsx_bulk> Parsed {len(employees)} employees from ({sheet})."
+            Util.log_message(Util.STATUS_CODES.PASS, msg, pathLogParser, True)
         except Exception as e:
-            print(f"Failed to parse {sheet}: {e}")
+            msg = f"<parse_cpr_xlsx_bulk> Failed to parse ({sheet}): {e}."
+            Util.log_message(Util.STATUS_CODES.ERROR, msg, pathLogParser, True)
             continue
 
         parsedData = {

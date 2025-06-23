@@ -42,7 +42,7 @@ PAY5 = config["pay5"]
 
 xlsxList = [file for file in os.listdir(pathFolderInData) if file.endswith(".xlsx")]
 
-Parser.CPRxlsxBulk(xlsxList, pathFolderInData, pathFolderOutData, PATH_LOG_PARSER)
+Parser.parse_cpr_xlsx_bulk(xlsxList, pathFolderInData, pathFolderOutData, PATH_LOG_PARSER)
 
 
 def run(playwright: Playwright) -> None:
@@ -56,13 +56,10 @@ def run(playwright: Playwright) -> None:
     page = context.new_page()
     page.goto("https://services.dir.ca.gov/gsp")
 
-    Automate.Login(page, USERNAME, PASSWORD, PATH_LOG_AUTOMATE)
-    Automate.DismissAnnoucement(page, PATH_LOG_AUTOMATE)
-    Automate.ProjectSearchDirToView(page, DIR, PATH_LOG_AUTOMATE)
-
-    Automate.PayrollIndexIdToOpen(page, PAY3, PATH_LOG_AUTOMATE)
-
-  
+    Automate.s0_log_in(page, USERNAME, PASSWORD, PATH_LOG_AUTOMATE)
+    Automate.s1_dismiss_announcement(page, PATH_LOG_AUTOMATE)
+    Automate.s1_project_search_dir_view(page, DIR, PATH_LOG_AUTOMATE)
+    Automate.s2_payroll_index_id_open(page, PAY3, PATH_LOG_AUTOMATE)
 
     page.wait_for_timeout(10000)
 
