@@ -127,7 +127,7 @@ def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
         payrollRow = payrollTable.locator("tr", has=page.get_by_role("rowheader", name=id, exact=True))
 
         if payrollRow.count() == 0:
-            msg = f"<s2_payroll_index_id_open> ({id}), payroll table is empty: {e}"
+            msg = f"<s2_payroll_index_id_open> ({id}), payroll table is empty."
             Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
             return False
 
@@ -190,7 +190,7 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
             finalPayrollButton.check()
         #final -- page.get_by_role("radio", name="Yes").check()
         
-        page.wait_for_timeout(1000)
+        # page.wait_for_timeout(1000)
 
         clearButton = page.get_by_role("button", name="Clear field subcontractor")
         if clearButton.is_visible():
@@ -200,7 +200,7 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
         page.get_by_label("", exact=True).fill(fakeData["primeCode"])
 
         page.get_by_role("option", name=fakeData["primeName"]).click()
-        msg = f"<s3_cpr_fill_from_open> Contract with ({fakeData["primeName"]}) as ({fakeData["primeCode"]})."
+        msg = f"<s3_cpr_fill_from_open> Contract with ({fakeData['primeName']}) as ({fakeData['primeCode']})."
         Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
 
@@ -227,7 +227,14 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
 
         page.wait_for_timeout(2000)
 
-        page.get_by_role("button", name="Next Step").click()
+        button = page.locator(".main-content button").last
+        if "next step" in button.text_content().strip().lower(): 
+            msg = f"<s3_cpr_fill_from_open> Payroll Setup complete, continue to next step."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+            button.click()
+        else:
+            msg = f"<s3_cpr_fill_from_open> Payroll Setup incomplete, unable to find next step button."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
         ### ************************************************************************** ###
 
@@ -250,8 +257,22 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
                 Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
 
-        #here
-        page.get_by_role("button", name="Next Step (0)").click()
+        page.wait_for_timeout(2000)
+        
+        button = page.locator(".main-content button").last
+        if "next step" in button.text_content().strip().lower(): 
+            msg = f"<s3_cpr_fill_from_open> Employee Selection complete, continue to next step."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+            button.click()
+        else:
+            msg = f"<s3_cpr_fill_from_open> Employee Selection incomplete, unable to find next step button."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+
+        ### ************************************************************************** ###
+
+        
+        ### *************************** Payroll Information ************************** ###
+
 
 
         ### ************************************************************************** ###
@@ -259,6 +280,6 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
         return
 
     except Exception as e:
-        msg = f"<s3_cpr_fill_from_open> ({dir}): {e}."
+        msg = f"<s3_cpr_fill_from_open>: {e}."
         Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
         return None
