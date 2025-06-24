@@ -279,7 +279,7 @@ def parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData, pathLogParser):
             weekEnding = header.get("week_ending")
             if not weekEnding:
                 msg = f"<parse_cpr_xlsx_sheet> ({sheet}): Week ending date not found in header."
-                Util.log_message(Util.STATUS_CODES.ERROR, msg, pathLogParser, True)
+                Util.log_message(Util.STATUS_CODES.FAIL, msg, pathLogParser, True)
                 return None
     
             _handle_employees(cell.strip(), indexRow, indexCol, dataFrame, employees, weekEnding)
@@ -296,7 +296,7 @@ def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: st
             Util.log_message(Util.STATUS_CODES.PASS, msg, pathLogParser, True)
         except Exception as e:
             msg = f"<parse_cpr_xlsx_bulk> Failed to parse ({sheet}): {e}."
-            Util.log_message(Util.STATUS_CODES.ERROR, msg, pathLogParser, True)
+            Util.log_message(Util.STATUS_CODES.FAIL, msg, pathLogParser, True)
             continue
 
         parsedData = {

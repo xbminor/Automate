@@ -33,11 +33,7 @@ with open(r".\config.json", "r") as configFile:
 USERNAME = config["username"]
 PASSWORD = config["password"]
 DIR = config["dir"]
-PAY1 = config["pay1"]
-PAY2 = config["pay2"] 
-PAY3 = config["pay3"]
-PAY4 = config["pay4"]
-PAY5 = config["pay5"]
+PAY = config["pay"]
 
 
 xlsxList = [file for file in os.listdir(pathFolderInData) if file.endswith(".xlsx")]
@@ -45,11 +41,13 @@ xlsxList = [file for file in os.listdir(pathFolderInData) if file.endswith(".xls
 Parser.parse_cpr_xlsx_bulk(xlsxList, pathFolderInData, pathFolderOutData, PATH_LOG_PARSER)
 
 
+
+
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context(
         viewport={"width":1280, "height":1440},
-        #viewport={"width":960, "height":1080},
+        # viewport={"width":960, "height":1080},
         # record_video_dir="videos",
         # record_video_size={"width":960, "height":1080}
     )
@@ -58,8 +56,9 @@ def run(playwright: Playwright) -> None:
 
     Automate.s0_log_in(page, USERNAME, PASSWORD, PATH_LOG_AUTOMATE)
     Automate.s1_dismiss_announcement(page, PATH_LOG_AUTOMATE)
-    Automate.s1_project_search_dir_view(page, DIR, PATH_LOG_AUTOMATE)
-    Automate.s2_payroll_index_id_open(page, PAY3, PATH_LOG_AUTOMATE)
+    Automate.s1_project_dir_cpr_view(page, DIR, PATH_LOG_AUTOMATE)
+    Automate.s2_payroll_index_id_open(page, PAY, PATH_LOG_AUTOMATE)
+    Automate.s3_cpr_fill_from_open(page, {}, PATH_LOG_AUTOMATE)
 
     page.wait_for_timeout(10000)
 
@@ -67,7 +66,9 @@ def run(playwright: Playwright) -> None:
     context.close()
     browser.close()
 
+#Payroll ID PRRUN2466494
 
 
-# with sync_playwright() as playwright:
-#     run(playwright)
+
+with sync_playwright() as playwright:
+    run(playwright)

@@ -2,12 +2,12 @@ from datetime import datetime
 
 class STATUS_CODES :
     PASS = 0
-    ERROR = 1
+    FAIL = 1
     LOG = 2
 
 statusLookup = {
     STATUS_CODES.PASS: "PASS",
-    STATUS_CODES.ERROR: "ERROR",
+    STATUS_CODES.FAIL: "FAIL",
     STATUS_CODES.LOG: "LOG",
 }
 
