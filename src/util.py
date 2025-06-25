@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 class STATUS_CODES :
@@ -31,3 +32,22 @@ def name_to_last_first(fullName: str) -> str:
         return f"{last}, {first}"
             
     return fullName  # fallback if name is malformed
+
+
+def name_trim_middle(fullName: str) -> str:
+    parts = fullName.strip().split()
+    if len(parts) >= 2:
+        return f"{parts[0]} {parts[-1]}"
+    return fullName  # fallback if malformed or single name
+
+
+def payroll_number_trim(payrollNum: str) -> str:
+    match = re.search(r"\d+", payrollNum)
+    return match.group() if match else "0"
+
+
+def number_to_string(value) -> str:
+    if isinstance(value, float):
+        return f"{value:.2f}"
+
+    return str(value)

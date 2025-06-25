@@ -6,6 +6,7 @@ import os
 
 
 emptyCellString = ""
+emptyCellNumber = "0"
 emptyCellFloat = 0.0
 emptyCellInt = 0
 
@@ -28,8 +29,9 @@ def _extract_header_project(dataFrame, indexRow, indexCol):
 
 
 def _extract_header_payroll_number(dataFrame, indexRow, indexCol):
+    number = dataFrame.iloc[indexRow, indexCol+3]
     data =  {
-        "payroll_number": dataFrame.iloc[indexRow, indexCol+3],
+        "payroll_number": Util.payroll_number_trim(str(number)),
     }
 
     return data
@@ -53,6 +55,9 @@ def _extract_employee_info(dataFrame, indexRow, indexCol, employeeTotal):
             "employee_address1": dataFrame.iloc[indexRow+2+3*i, indexCol],
             "employee_address2": dataFrame.iloc[indexRow+3+3*i, indexCol],
         }
+
+        data["dev_employee_name_trim"] = Util.name_trim_middle(data["employee_name"])
+        data["dev_employee_last_first"] = Util.name_to_last_first(data["dev_employee_name_trim"]) 
         names.append(data)
 
     return names
@@ -107,9 +112,9 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
             otHours = dataFrame.iloc[indexRow+2+3*i, indexColSun+j]
             dtHours = dataFrame.iloc[indexRow+3+3*i, indexColSun+j]
             
-            dataWeekRT.append({"day": day, "date": date, "value": emptyCellFloat if pd.isna(rtHours) else float(rtHours)})
-            dataWeekOT.append({"day": day, "date": date, "value": emptyCellFloat if pd.isna(otHours) else float(otHours)})
-            dataWeekDT.append({"day": day, "date": date, "value": emptyCellFloat if pd.isna(dtHours) else float(dtHours)})
+            dataWeekRT.append({"day": day, "date": date, "value": emptyCellNumber if pd.isna(rtHours) else Util.number_to_string(rtHours)})
+            dataWeekOT.append({"day": day, "date": date, "value": emptyCellNumber if pd.isna(otHours) else Util.number_to_string(otHours)})
+            dataWeekDT.append({"day": day, "date": date, "value": emptyCellNumber if pd.isna(dtHours) else Util.number_to_string(dtHours)})
     
 
         # Starting column of Timesheet Hours
@@ -118,9 +123,9 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
         otTime = dataFrame.iloc[indexRow+2+3*i, indexColTimeTotal]
         dtTime = dataFrame.iloc[indexRow+3+3*i, indexColTimeTotal]
 
-        data["work_time_total_rt"] = emptyCellFloat if pd.isna(rtTime) else float(rtTime)
-        data["work_time_total_ot"] = emptyCellFloat if pd.isna(otTime) else float(otTime)
-        data["work_time_total_dt"] = emptyCellFloat if pd.isna(dtTime) else float(dtTime)
+        data["work_time_total_rt"] = emptyCellNumber if pd.isna(rtTime) else Util.number_to_string(rtTime)
+        data["work_time_total_ot"] = emptyCellNumber if pd.isna(otTime) else Util.number_to_string(otTime)
+        data["work_time_total_dt"] = emptyCellNumber if pd.isna(dtTime) else Util.number_to_string(dtTime)
 
 
         # Starting column of Paid Hours
@@ -129,9 +134,9 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
         otPaid = dataFrame.iloc[indexRow+2+3*i, indexColTimePaid]
         dtPaid = dataFrame.iloc[indexRow+3+3*i, indexColTimePaid]
 
-        data["work_time_paid_rt"] = emptyCellFloat if pd.isna(rtPaid) else float(rtPaid)
-        data["work_time_paid_ot"] = emptyCellFloat if pd.isna(otPaid) else float(otPaid)
-        data["work_time_paid_dt"] = emptyCellFloat if pd.isna(dtPaid) else float(dtPaid)
+        data["work_time_paid_rt"] = emptyCellNumber if pd.isna(rtPaid) else Util.number_to_string(rtPaid)
+        data["work_time_paid_ot"] = emptyCellNumber if pd.isna(otPaid) else Util.number_to_string(otPaid)
+        data["work_time_paid_dt"] = emptyCellNumber if pd.isna(dtPaid) else Util.number_to_string(dtPaid)
 
 
         # Starting column of Pay Rate
@@ -140,15 +145,15 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
         otRate = dataFrame.iloc[indexRow+2+3*i, indexColPayRate]
         dtRate = dataFrame.iloc[indexRow+3+3*i, indexColPayRate]
 
-        data["work_pay_rate_rt"] = emptyCellFloat if pd.isna(rtRate) else float(rtRate)
-        data["work_pay_rate_ot"] = emptyCellFloat if pd.isna(otRate) else float(otRate)
-        data["work_pay_rate_dt"] = emptyCellFloat if pd.isna(dtRate) else float(dtRate)
+        data["work_pay_rate_rt"] = emptyCellNumber if pd.isna(rtRate) else Util.number_to_string(rtRate)
+        data["work_pay_rate_ot"] = emptyCellNumber if pd.isna(otRate) else Util.number_to_string(otRate)
+        data["work_pay_rate_dt"] = emptyCellNumber if pd.isna(dtRate) else Util.number_to_string(dtRate)
 
 
         # Starting column of Job Gross Pay
         indexColJobGross = indexCol + 11
         grossJob = dataFrame.iloc[indexRow+1+3*i, indexColJobGross]
-        data["work_pay_gross_job"] = emptyCellFloat if pd.isna(grossJob) else float(grossJob)
+        data["work_pay_gross_job"] = emptyCellNumber if pd.isna(grossJob) else Util.number_to_string(grossJob)
 
         
         # Starting column of Check Number
@@ -160,51 +165,50 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
         # Starting column of Total Gross Pay
         indexColTotalGross = indexCol + 14
         grossTotal = dataFrame.iloc[indexRow+1+3*i, indexColTotalGross]
-        data["work_pay_gross_total"] = emptyCellFloat if pd.isna(grossTotal) else float(grossTotal)
+        data["work_pay_gross_total"] = emptyCellNumber if pd.isna(grossTotal) else Util.number_to_string(grossTotal)
 
 
         # Starting column of Social Security Tax
         indexColSocial = indexCol + 15
         taxSocial = dataFrame.iloc[indexRow+1+3*i, indexColSocial]
-        data["work_pay_tax_social"] = emptyCellFloat if pd.isna(taxSocial) else float(taxSocial)
+        data["work_pay_tax_social"] = emptyCellNumber if pd.isna(taxSocial) else Util.number_to_string(taxSocial)
 
 
         # Starting column of Medicare Tax
         indexColMedicare = indexCol + 16
         taxMedi = dataFrame.iloc[indexRow+1+3*i, indexColMedicare]
-        data["work_pay_tax_medic"] = emptyCellFloat if pd.isna(taxMedi) else float(taxMedi)
+        data["work_pay_tax_medic"] = emptyCellNumber if pd.isna(taxMedi) else Util.number_to_string(taxMedi)
 
 
         # Starting column of Federal Tax
         indexColFederal = indexCol + 17
         taxFed = dataFrame.iloc[indexRow+1+3*i, indexColFederal]
-        data["work_pay_tax_fed"] = emptyCellFloat if pd.isna(taxFed) else float(taxFed)
+        data["work_pay_tax_fed"] = emptyCellNumber if pd.isna(taxFed) else Util.number_to_string(taxFed)
 
 
         # Starting column of State Tax
         indexColState = indexCol + 18
         taxState = dataFrame.iloc[indexRow+1+3*i, indexColState]
-        data["work_pay_tax_state"] = emptyCellFloat if pd.isna(taxState) else float(taxState)
+        data["work_pay_tax_state"] = emptyCellNumber if pd.isna(taxState) else Util.number_to_string(taxState)
 
 
         # Starting column of Other
         indexColOther = indexCol + 19
         taxOther = dataFrame.iloc[indexRow+1+3*i, indexColOther]
-        data["work_pay_tax_other"] = emptyCellFloat if pd.isna(taxOther) else float(taxOther)
+        data["work_pay_tax_other"] = emptyCellNumber if pd.isna(taxOther) else Util.number_to_string(taxOther)
 
 
         # Starting column of Total Deductions
         indexColDeduct = indexCol + 20
         deductTotal = dataFrame.iloc[indexRow+1+3*i, indexColDeduct]
-        data["work_pay_deduction_total"] = emptyCellFloat if pd.isna(deductTotal) else float(deductTotal)
+        data["work_pay_deduct_total"] = emptyCellNumber if pd.isna(deductTotal) else Util.number_to_string(deductTotal)
 
 
         # Starting column of Net Pay
         indexColNetPay = indexCol + 21
         netPay = dataFrame.iloc[indexRow+1+3*i, indexColNetPay]
-        data["work_pay_net"] = emptyCellFloat if pd.isna(netPay) else float(netPay)
+        data["work_pay_net"] = emptyCellNumber if pd.isna(netPay) else Util.number_to_string(netPay)
 
-        
         data["hours_rt"] = dataWeekRT
         data["hours_ot"] = dataWeekOT
         data["hours_dt"] = dataWeekDT
@@ -299,9 +303,18 @@ def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: st
             Util.log_message(Util.STATUS_CODES.FAIL, msg, pathLogParser, True)
             continue
 
+
+        parsedEmployeeData = {}
+        for employeeData in employees:
+            name = Util.name_trim_middle(employeeData.get("employee_name", ""))
+            if name == "":
+                return
+            
+            parsedEmployeeData[name] = employeeData
+
         parsedData = {
             "header": header,
-            "employees": employees
-}
+            "employees": parsedEmployeeData
+        }
         with open(os.path.join(f"{pathOutputData}_parse", f"Parsed_{sheet}.json"), "w") as parsedCPR:
             json.dump(parsedData, parsedCPR, indent=2, ensure_ascii=False)
