@@ -267,7 +267,6 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
         else:
             msg = f"<s3_cpr_fill_from_open> Employee Selection incomplete, unable to find next step button."
             Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
-
         ### ************************************************************************** ###
 
         
@@ -296,14 +295,26 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
         if len(employeeNavSectionButtons) is not len(names):
             print("Section employee buttons is not matching employee count")
             return 
-            
         
-        for employeeNavSectionButton in employeeNavSectionButtons:
-            print(f"Entering payroll information for ({employeeNavSectionButton.text_content().strip()}).")
-            employeeNavSectionButton.click()
 
-            page.wait_for_timeout(2000)
+        fakePayrollInfo = {
+            "check" : "2789",
+        }
 
+        print(f"Entering payroll information for ({employeeNavSectionButtons[0].text_content().strip()}).")
+        employeeNavSectionButtons[0].click()
+        _fillEmployeePayrollInfo(page, fakePayrollInfo)
+
+
+        
+        # for employeeNavSectionButton in employeeNavSectionButtons:
+        #     print(f"Entering payroll information for ({employeeNavSectionButton.text_content().strip()}).")
+        #     employeeNavSectionButton.click()
+
+        #     _fillEmployeePayrollInfo()
+            
+
+        #     page.wait_for_timeout(2000)
 
 
         ### ************************************************************************** ###
@@ -314,3 +325,171 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
         msg = f"<s3_cpr_fill_from_open>: {e}."
         Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
         return None
+    
+
+
+def _fillEmployeePayrollInfo(page: Page, payrollInfo):
+    page.locator("input[type=\"text\"]").fill("")
+    page.locator("input[type=\"text\"]").fill(payrollInfo["check"])
+
+    page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
+    page.locator("#classPaid0").select_option("5548654ddb0c1a104489543ed39619bc")
+    page.locator("#classPaid1").select_option("journeyman")
+
+
+    # sunday
+    rtSunButton = page.locator(".div-table-cell.ng-scope").first.get_by_role("spinbutton")
+    rtSunButton.fill("0")
+
+    # monday
+    rtMonButton = page.locator(".div-table-body > div > div:nth-child(3)").first.get_by_role("spinbutton")
+    rtMonButton.fill("8")
+
+    # tuesday
+    rtTueButton = page.locator(".div-table-body > div > div:nth-child(4)").first.get_by_role("spinbutton")
+    rtTueButton.fill("8")
+
+    # wednesday
+    rtWedButton = page.locator(".div-table-body > div > div:nth-child(5)").first.get_by_role("spinbutton")
+    rtWedButton.fill("8")
+
+    # thursday
+    rtThuButton = page.locator(".div-table-body > div > div:nth-child(6)").first.get_by_role("spinbutton")
+    rtThuButton.fill("8")
+
+    # friday
+    rtFriButton = page.locator(".div-table-body > div > div:nth-child(7)").first.get_by_role("spinbutton")
+    rtFriButton.fill("8")
+
+    # saturday
+    rtSatButton = page.locator(".div-table-body > div > div:nth-child(8)").first.get_by_role("spinbutton")
+    rtSatButton.fill("0")
+
+
+    if True:
+        page.get_by_role("link", name="Add Overtime").click()
+        
+        # sunday
+        otSunButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(2)").get_by_role("spinbutton")
+        otSunButton.fill("0")
+
+        # monday
+        otMonButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(3)").get_by_role("spinbutton")
+        otMonButton.fill("8")
+
+        # tuesday
+        otTueButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(4)").get_by_role("spinbutton")
+        otTueButton.fill("8")
+
+        # wednesday
+        otWedButton = page.locator("div:nth-child(2) > div:nth-child(5)").get_by_role("spinbutton")
+        otWedButton.fill("8")
+
+        # thursday
+        otThuButton = page.locator("div:nth-child(2) > div:nth-child(6)").get_by_role("spinbutton")
+        otThuButton.fill("8")
+
+        # friday
+        otFriButton = page.locator("div:nth-child(2) > div:nth-child(7)").get_by_role("spinbutton")
+        otFriButton.fill("8")
+
+        # saturday
+        otSatButton = page.locator("div:nth-child(2) > div:nth-child(8)").get_by_role("spinbutton")
+        otSatButton.fill("0")
+
+
+    if True:
+        page.get_by_role("link", name="Add Doubletime").click()
+        
+        # sunday
+        dtSunButton = page.locator(".div-table-body > div:nth-child(3) > div:nth-child(2)").get_by_role("spinbutton")
+        dtSunButton.fill("0")
+
+        # monday
+        dtMonButton = page.locator(".div-table-body > div:nth-child(3) > div:nth-child(3)").get_by_role("spinbutton")
+        dtMonButton.fill("8")
+
+        # tuesday
+        dtTueButton = page.locator("div:nth-child(3) > div:nth-child(4)").get_by_role("spinbutton")
+        dtTueButton.fill("8")
+
+        # wednesday
+        dtWedButton = page.locator("div:nth-child(3) > div:nth-child(5)").get_by_role("spinbutton")
+        dtWedButton.fill("8")
+
+        # thursday
+        dtThuButton = page.locator("div:nth-child(3) > div:nth-child(6)").get_by_role("spinbutton")
+        dtThuButton.fill("8")
+
+        # friday
+        dtFriButton = page.locator("div:nth-child(3) > div:nth-child(7)").get_by_role("spinbutton")
+        dtFriButton.fill("8")
+
+        # saturday
+        dtSatButton = page.locator("div:nth-child(3) > div:nth-child(8)").get_by_role("spinbutton")
+        dtSatButton.fill("0")
+    
+
+    # page.get_by_role("link", name="Remove Doubletime").click()
+    # page.get_by_role("link", name="Remove Overtime").click()
+
+    if True:
+        page.locator("#fringeYes0").check()
+
+        # Health / Welfare 
+        fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(2)").first.get_by_role("spinbutton")
+        fringeRTRateButton.fill("10.60")
+
+        # Pension
+        fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(3)").first.get_by_role("spinbutton")
+        fringeRTRateButton.fill("14.96")
+
+        # Vacation / Holiday
+        fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(4)").first.get_by_role("spinbutton")
+        fringeRTRateButton.fill("3.51")
+
+        # Training
+        fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(8)").get_by_role("spinbutton")
+        fringeRTRateButton.fill("0.52")
+
+        #Other
+        fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(9)").get_by_role("spinbutton")
+        fringeRTRateButton.fill("0.32")
+    else:
+        page.locator("#fringeNo0").check()
+
+    # RT Rate
+    fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
+    fringeRTRateButton.fill("1")
+
+    # OT Rate
+    fringeOTRateButton = page.locator(".div-table-body > .div-table-row > div:nth-child(10)").get_by_role("spinbutton")
+    fringeOTRateButton.fill("1")
+
+    # DT Rate
+    fringeDTRateButton = page.locator(".div-table-body > .div-table-row > div:nth-child(11)").get_by_role("spinbutton")
+    fringeDTRateButton.fill("1")
+
+
+    # Federtal Tax
+    taxFedButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
+    taxFedButton.fill("1")
+
+    # FICA
+    taxFICAButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div:nth-child(2)").get_by_role("spinbutton")
+    taxFICAButton.fill("1")
+
+    # State Tax
+    taxStateButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div:nth-child(3)").get_by_role("spinbutton")
+    taxStateButton.fill("1")
+
+    #SDI
+    taxSDIButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div:nth-child(4)").get_by_role("spinbutton")
+    taxSDIButton.fill("1")
+
+
+    # Gross wages
+    grossWageButton = page.locator(".wages-section > .div-table > .div-table-body > .div-table-row > .div-table-cell").get_by_role("spinbutton")
+    grossWageButton.fill("1")
+
+    return
