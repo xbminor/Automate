@@ -51,3 +51,7 @@ def number_to_string(value) -> str:
         return f"{value:.2f}"
 
     return str(value)
+
+
+def string_to_date(date: str) -> datetime:
+    return datetime.strptime(date, "%Y-%m-%d").date()

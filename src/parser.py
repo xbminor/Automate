@@ -7,8 +7,6 @@ import os
 
 emptyCellString = ""
 emptyCellNumber = "0"
-emptyCellFloat = 0.0
-emptyCellInt = 0
 
 def _extract_header_contractor(dataFrame, indexRow, indexCol):
     data =  {
@@ -38,8 +36,11 @@ def _extract_header_payroll_number(dataFrame, indexRow, indexCol):
 
 
 def _extract_header_week_ending(dataFrame, indexRow, indexCol):
+    dateWeekEnding = dataFrame.iloc[indexRow, indexCol+3].date()
+    dateWeekStart = dateWeekEnding - timedelta(days=6)
     data =  {
-        "week_ending": dataFrame.iloc[indexRow, indexCol+3].date().isoformat(),
+        "week_ending": dateWeekEnding.isoformat(),
+        "week_starting": dateWeekStart.isoformat(),
     }
 
     return data
@@ -55,9 +56,9 @@ def _extract_employee_info(dataFrame, indexRow, indexCol, employeeTotal):
             "employee_address1": dataFrame.iloc[indexRow+2+3*i, indexCol],
             "employee_address2": dataFrame.iloc[indexRow+3+3*i, indexCol],
         }
-
-        data["dev_employee_name_trim"] = Util.name_trim_middle(data["employee_name"])
-        data["dev_employee_last_first"] = Util.name_to_last_first(data["dev_employee_name_trim"]) 
+        # temp for misspelled name on Oliver Browner
+        if data["employee_name"] == "Oliver K Bowner":
+            data["employee_name"] = "Oliver K Browner"
         names.append(data)
 
     return names
@@ -85,11 +86,10 @@ def _extract_employee_work_class(dataFrame, indexRow, indexCol, employeeTotal):
     return output
 
 
-def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, strWeekEnding):
+def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, strWeekStarting):
     output = []
     weekDays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
-    dateWeekEnding = datetime.strptime(strWeekEnding, "%Y-%m-%d").date()
-    dateWeekStart = dateWeekEnding - timedelta(days=6)
+    dateWeekStart = datetime.strptime(strWeekStarting, "%Y-%m-%d").date()
 
     for i in range(employeeTotal):
         data = {}
@@ -159,7 +159,7 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
         # Starting column of Check Number
         indexColCheckNum = indexCol + 13
         checkNum = dataFrame.iloc[indexRow+1+3*i, indexColCheckNum]
-        data["work_pay_check_num"] = emptyCellString if pd.isna(checkNum) else checkNum
+        data["work_pay_check_num"] = emptyCellString if pd.isna(checkNum) else Util.number_to_string(checkNum)
 
 
         # Starting column of Total Gross Pay
@@ -218,7 +218,7 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
     return output
 
 
-def _handle_employees(cell, indexRow, indexCol, dataFrame, employees, dateWeekEnding):
+def _handle_employees(cell, indexRow, indexCol, dataFrame, employees, strWeekStarting):
     employeeTotal = int((len(dataFrame)-8)/3)
     employeeData = None
 
@@ -229,7 +229,7 @@ def _handle_employees(cell, indexRow, indexCol, dataFrame, employees, dateWeekEn
     elif cell == "Classification":
         employeeData = _extract_employee_work_class(dataFrame, indexRow, indexCol, employeeTotal)
     elif cell == "Type":
-        employeeData = _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, dateWeekEnding)
+        employeeData = _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, strWeekStarting)
 
     if employeeData:
         for i in range(employeeTotal):
@@ -280,17 +280,19 @@ def parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData, pathLogParser):
         cell = dataFrame.iat[indexRow, indexCol]
         
         if isinstance(cell, str):
-            weekEnding = header.get("week_ending")
-            if not weekEnding:
-                msg = f"<parse_cpr_xlsx_sheet> ({sheet}): Week ending date not found in header."
+            weekStarting = header.get("week_starting")
+            if not weekStarting:
+                msg = f"<parse_cpr_xlsx_sheet> ({sheet}): Week start date not found in header."
                 Util.log_message(Util.STATUS_CODES.FAIL, msg, pathLogParser, True)
                 return None
     
-            _handle_employees(cell.strip(), indexRow, indexCol, dataFrame, employees, weekEnding)
+            _handle_employees(cell.strip(), indexRow, indexCol, dataFrame, employees, weekStarting)
     return dataFrame, header, employees
 
 
 def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
+    allParsedData = []
+    
     for sheet in xlsxSheets:
         pathInputSheet = os.path.join(pathInputData, sheet)
 
@@ -316,5 +318,10 @@ def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: st
             "header": header,
             "employees": parsedEmployeeData
         }
+
         with open(os.path.join(f"{pathOutputData}_parse", f"Parsed_{sheet}.json"), "w") as parsedCPR:
             json.dump(parsedData, parsedCPR, indent=2, ensure_ascii=False)
+
+        allParsedData.append(parsedData)
+
+    return allParsedData

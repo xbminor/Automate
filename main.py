@@ -37,10 +37,7 @@ PAY = config["pay"]
 
 
 xlsxList = [file for file in os.listdir(pathFolderInData) if file.endswith(".xlsx")]
-
-Parser.parse_cpr_xlsx_bulk(xlsxList, pathFolderInData, pathFolderOutData, PATH_LOG_PARSER)
-
-
+parsedData = Parser.parse_cpr_xlsx_bulk(xlsxList, pathFolderInData, pathFolderOutData, PATH_LOG_PARSER)
 
 
 def run(playwright: Playwright) -> None:
@@ -58,9 +55,9 @@ def run(playwright: Playwright) -> None:
     Automate.s1_dismiss_announcement(page, PATH_LOG_AUTOMATE)
     Automate.s1_project_dir_cpr_view(page, DIR, PATH_LOG_AUTOMATE)
     Automate.s2_payroll_index_id_open(page, PAY, PATH_LOG_AUTOMATE)
-    Automate.s3_cpr_fill_from_open(page, {}, PATH_LOG_AUTOMATE)
+    Automate.s3_cpr_fill_from_open(page, parsedData[0], PATH_LOG_AUTOMATE)
 
-    page.wait_for_timeout(10000)
+    page.wait_for_timeout(1000000)
 
     # ---------------------
     context.close()
