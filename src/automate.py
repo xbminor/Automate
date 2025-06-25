@@ -273,6 +273,37 @@ def s3_cpr_fill_from_open(page: Page, data, logPath: str) -> bool:
         
         ### *************************** Payroll Information ************************** ###
 
+        page.wait_for_timeout(2000)
+
+        navigationSection = page.get_by_role("navigation")
+        payrollInfoNavSectionButton = navigationSection.get_by_role("button", name=re.compile(r"Payroll Information", re.IGNORECASE))
+        payrollInfoNavSectionButton.click()
+
+        
+        names = [Util.name_to_last_first(x) for x in fakeEmployees]
+        employeeNavSectionButtons = []
+
+        payrollInfoNavSectionUpdated = navigationSection.get_by_role("button")
+        for i in range(payrollInfoNavSectionUpdated.count()):
+            button = payrollInfoNavSectionUpdated.nth(i)
+            text = button.text_content().strip()
+            for name in names:
+                if name in text:
+                    print(f"match found: ({text}) with ({name}).")
+                    employeeNavSectionButtons.append(button)
+
+        
+        if len(employeeNavSectionButtons) is not len(names):
+            print("Section employee buttons is not matching employee count")
+            return 
+            
+        
+        for employeeNavSectionButton in employeeNavSectionButtons:
+            print(f"Entering payroll information for ({employeeNavSectionButton.text_content().strip()}).")
+            employeeNavSectionButton.click()
+
+            page.wait_for_timeout(2000)
+
 
 
         ### ************************************************************************** ###

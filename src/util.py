@@ -22,3 +22,12 @@ def log_message(status: int, msg: str, filePath: str, isPrint: bool):
     if isPrint:
         print(log)
 
+
+def name_to_last_first(fullName: str) -> str:
+    parts = fullName.strip().split()
+    if len(parts) >= 2:
+        first = " ".join(parts[:-1])
+        last = parts[-1]
+        return f"{last}, {first}"
+            
+    return fullName  # fallback if name is malformed
