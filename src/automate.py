@@ -301,22 +301,15 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
             print("Section employee buttons is not matching employee count")
             return 
         
-        employeeToProcess = employees[employeeNavSectionButtons[0]["name"]]
-        print(f"Entering payroll information for ({employeeNavSectionButtons[0]["name"]}).")
-     
-        employeeNavSectionButtons[0]["button"].click()
-        _fillEmployeePayrollInfo(page, employeeToProcess, header["week_starting"])
+        for i in range(len(employeeNavSectionButtons)):
+            employeePayrollToProcess = employees[employeeNavSectionButtons[i]["name"]]
+            print(f"Entering payroll information for ({employeeNavSectionButtons[i]["name"]}).")
+            employeeNavSectionButtons[i]["button"].click()
 
+            _fillEmployeePayrollInfo(page, employeePayrollToProcess, header["week_starting"])
 
-        
-        # for employeeNavSectionButton in employeeNavSectionButtons:
-        #     print(f"Entering payroll information for ({employeeNavSectionButton.text_content().strip()}).")
-        #     employeeNavSectionButton.click()
-
-        #     _fillEmployeePayrollInfo()
-            
-
-        #     page.wait_for_timeout(2000)
+            page.wait_for_timeout(2000)
+            print(f"Completed payroll information for ({employeeNavSectionButtons[i]["name"]}).")
 
 
         ### ************************************************************************** ###
@@ -360,11 +353,11 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
         page.locator("#other-classification").fill("Dump Truck")
         isFringe = False
 
-    elif payrollInfo["work_classification"] == "Apprentice":
+    elif payrollInfo["work_classification"] == "Apprentice" or payrollInfo["work_classification"] == "Apprentice 1":
         page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
         page.locator("#classPaid0").select_option("5548654ddb0c1a104489543ed39619bc")
         page.locator("#classPaid1").select_option("apprentice")
-        page.get_by_role("combobox").nth(3).select_option("number:1")
+        page.get_by_role("combobox").nth(3).select_option("number:2")
         isFringe = True
     
     
@@ -399,7 +392,11 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
 
 
     if payrollInfo["work_pay_type_OT"]:
-        page.get_by_role("link", name="Add Overtime").click()
+        overtimeLink = page.locator("a").filter(has_text="Add Overtime")
+        if overtimeLink.count() > 0:
+            overtimeLink.first.click()
+        else:
+            print("Overtime already added.")
         
         # sunday
         otSunButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(2)").get_by_role("spinbutton")
@@ -490,7 +487,7 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
                     "trn": "0.52",
                     "oth": "0.32"
                 }
-            }
+            },
         ]
 
         fringeRates = None
