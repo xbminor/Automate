@@ -316,7 +316,18 @@ def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: st
             if name == "":
                 return
             
-            parsedEmployeeData[name] = employeeData
+            keySearch = ["employee_name", "employee_address1", "employee_address2", "employee_ssn", "work_pay_check_num",
+                        "work_pay_gross_total", "work_pay_tax_social", "work_pay_tax_medic", "work_pay_tax_fed", 
+                        "work_pay_tax_state", "work_pay_tax_other", "work_pay_deduct_total", "work_pay_net"]
+
+            dataEmployeeOther = {key: employeeData[key] for key in keySearch if key in employeeData}
+            dataEmployeeClass = {key: employeeData[key] for key in employeeData if key not in keySearch}
+
+            if name not in parsedEmployeeData:
+                parsedEmployeeData[name] = dataEmployeeOther
+                parsedEmployeeData[name]["class"] = []
+            
+            parsedEmployeeData[name]["class"].append(dataEmployeeClass)
 
         parsedData = {
             "header": header,
