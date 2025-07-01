@@ -59,6 +59,10 @@ def _extract_employee_info(dataFrame, indexRow, indexCol, employeeTotal):
         # temp for misspelled name on Oliver Browner
         if data["employee_name"] == "Oliver K Bowner":
             data["employee_name"] = "Oliver K Browner"
+
+        if data["employee_name"] == "SERGIO VILLA":
+            data["employee_name"] = "Sergio Villa"
+        
         names.append(data)
 
     return names

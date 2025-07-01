@@ -112,6 +112,8 @@ def s1_project_dir_cpr_new(page: Page, dir: str, logPath: str) -> Locator:
         return None
 
 
+# "pay": "PRRUN2500232"
+
 # page.locator("button").filter(has_text="Submit Manual eCPR").click()
 def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
     try:
@@ -123,16 +125,22 @@ def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
         # Find the matching row that contains the correct rowheader as id
         msg = f"<s2_payroll_index_id_open> Indexing 'Payroll Runs' for matching Payroll ID as ({id})."
         Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
-        payrollTable = page.get_by_role("table", name="Payroll Runs")
-        payrollRow = payrollTable.locator("tr", has=page.get_by_role("rowheader", name=id, exact=True))
 
-        if payrollRow.count() == 0:
-            msg = f"<s2_payroll_index_id_open> ({id}), payroll table is empty."
-            Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
-            return False
+        while True:
+            payrollTable = page.get_by_role("table", name="Payroll Runs")
+            payrollRow = payrollTable.locator("tr", has_text=id)
+
+            if payrollRow.count() > 0:
+                break
+
+            nav = page.locator('.col-md-12').first.get_by_role("navigation")
+            navPageNext = nav.get_by_role("link", name="Next Page")
+            if navPageNext.is_enabled():
+                navPageNext.click()
+                page.wait_for_timeout(2000)
 
         # Verify the exact match
-        payrollRowHeaderCell = payrollRow.get_by_role("rowheader").first
+        payrollRowHeaderCell = payrollRow.nth(0).locator("td").nth(1)
         expect(payrollRowHeaderCell).to_have_text(id, timeout=5000)
 
         idMatch = payrollRowHeaderCell.text_content().strip()
@@ -143,7 +151,7 @@ def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
         return True
     
     except Exception as e:
-        msg = f"<s2_payroll_index_id_open> ({id}): {e}"
+        msg = f"<s2_payroll_index_id_open> ({id}): {e}."
         Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
         return False
 
@@ -198,7 +206,7 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
         Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
 
-        payrollPeriodButton = page.get_by_role("radio", name="Weekly Bi-weekly Semi-monthly")
+        payrollPeriodButton = page.get_by_role("radio", name="Weekly", exact=True)
         if payrollPeriodButton.is_disabled():
             msg = f"<s3_cpr_fill_from_open> Payroll period is disabled."
             Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
@@ -218,7 +226,7 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
             Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
             payrollDateButton.fill(weekStart)
 
-
+        page.locator(".main-content").click()
         page.wait_for_timeout(2000)
 
         button = page.locator(".main-content button").last
@@ -274,6 +282,8 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
         payrollInfoNavSectionButton = navigationSection.get_by_role("button", name=re.compile(r"Payroll Information", re.IGNORECASE))
         payrollInfoNavSectionButton.click()
 
+        page.wait_for_timeout(2000)
+
         employeeNavSectionButtons = []
 
         reverseLookup = {}
@@ -298,10 +308,12 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
 
         
         if len(employeeNavSectionButtons) is not len(employeeNames):
-            print("Section employee buttons is not matching employee count")
-            return 
+            print("Section employee buttons is not matching employee count") 
         
         for i in range(len(employeeNavSectionButtons)):
+            # if employeeNavSectionButtons[i]["name"] == "Nathan Hayes":
+            #     continue
+
             employeePayrollToProcess = employees[employeeNavSectionButtons[i]["name"]]
             print(f"Entering payroll information for ({employeeNavSectionButtons[i]["name"]}).")
             employeeNavSectionButtons[i]["button"].click()
@@ -324,8 +336,8 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
 
 
 def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
-    page.locator("input[type=\"text\"]").fill("")
-    page.locator("input[type=\"text\"]").fill(payrollInfo["work_pay_check_num"])
+    page.locator("#positiveNumber_1").fill("")
+    page.locator("#positiveNumber_1").fill(payrollInfo["work_pay_check_num"])
 
     isFringe = False
     if payrollInfo["work_classification"] == "Laborer Grp 2":
@@ -347,10 +359,11 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
         page.locator("#classPaid1").select_option("journeyman")
         isFringe = False
 
-    elif payrollInfo["work_classification"] == "Driver":
+    elif payrollInfo["work_classification"] == "DMP Truck Driver" or payrollInfo["work_classification"] == "Dump Truck Driver RT":
         page.locator("#craftPaid0").select_option("47bbecb687644650c837eb1e3fbb3548")
         page.locator("#classPaid0").select_option("ee01f85687778ed4c837eb1e3fbb35b7")
         page.locator("#other-classification").fill("Dump Truck")
+        page.locator("#classPaid1").select_option("journeyman")
         isFringe = False
 
     elif payrollInfo["work_classification"] == "Apprentice" or payrollInfo["work_classification"] == "Apprentice 1":
@@ -359,6 +372,13 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
         page.locator("#classPaid1").select_option("apprentice")
         page.get_by_role("combobox").nth(3).select_option("number:2")
         isFringe = True
+    
+    elif payrollInfo["work_classification"] == "Foreman" or payrollInfo["work_classification"] == "Foreman/Laborer":
+        page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
+        page.locator("#classPaid0").select_option("3601f85687778ed4c837eb1e3fbb35c9")
+        page.get_by_role("textbox", name="* Other Classification (").fill("Foreman")
+        page.locator("#classPaid1").select_option("journeyman")
+        isFringe = False
     
     
     if payrollInfo["work_pay_type_RT"]:
@@ -463,7 +483,8 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
     # page.get_by_role("link", name="Remove Overtime").click()
 
     if isFringe:
-        page.locator("#fringeYes0").check()
+        page.locator("#fringePlan0").check()
+        page.locator("#fringeDirect0").uncheck()
 
         FRINGE_RATES = [
             {
@@ -510,25 +531,26 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
         fringeButtonVAC.fill(fringeRates["vac"])
 
         # Training
-        fringeButtonTRN = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(8)").get_by_role("spinbutton")
+        fringeButtonTRN = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(5)").first.get_by_role("spinbutton")
         fringeButtonTRN.fill(fringeRates["trn"])
 
         #Other
-        fringeButtonOTH = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(9)").get_by_role("spinbutton")
+        fringeButtonOTH = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(6)").first.get_by_role("spinbutton")
         fringeButtonOTH.fill(fringeRates["oth"])
     else:
-        page.locator("#fringeNo0").check()
+        page.locator("#fringeDirect0").check()
+        page.locator("#fringePlan0").uncheck()
 
     # RT Rate
     fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
     fringeRTRateButton.fill(payrollInfo["work_pay_rate_rt"])
 
     # OT Rate
-    fringeOTRateButton = page.locator(".div-table-body > .div-table-row > div:nth-child(10)").get_by_role("spinbutton")
+    fringeOTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(7)").first.get_by_role("spinbutton")
     fringeOTRateButton.fill(payrollInfo["work_pay_rate_ot"])
 
     # DT Rate
-    fringeDTRateButton = page.locator(".div-table-body > .div-table-row > div:nth-child(11)").get_by_role("spinbutton")
+    fringeDTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(8)").first.get_by_role("spinbutton")
     fringeDTRateButton.fill(payrollInfo["work_pay_rate_dt"])
 
 
@@ -550,7 +572,9 @@ def _fillEmployeePayrollInfo(page: Page, payrollInfo, weekStart):
     taxSDIButton.fill(payrollInfo["work_pay_tax_other"])
 
     # Gross wages
-    grossWageButton = page.locator(".wages-section > .div-table > .div-table-body > .div-table-row > .div-table-cell").get_by_role("spinbutton")
+    grossWageButton = page.locator(".wages-section > .div-table > .div-table-body > .div-table-row > .div-table-cell").first.get_by_role("textbox")
     grossWageButton.fill(payrollInfo["work_pay_gross_total"])
+
+    page.locator(".main-content").click()
 
     return
