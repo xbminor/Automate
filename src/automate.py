@@ -357,10 +357,11 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
     
 
 
-def _fillEmployeePayrollClass1(page: Page, payrollInfo, weekStart):
+def _fillEmployeePayrollClass1(page: Page, payroll, weekStart):
     isFringe = False
     boolIsOT = False
     boolIsDT = False
+    payrollInfo = payroll["class"][0]
     if payrollInfo["work_classification"] == "Laborer Grp 2":
         page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
         page.locator("#classPaid0").select_option("5548654ddb0c1a104489543ed39619bc")
@@ -399,7 +400,11 @@ def _fillEmployeePayrollClass1(page: Page, payrollInfo, weekStart):
         page.locator("#classPaid0").select_option("3601f85687778ed4c837eb1e3fbb35c9")
         page.get_by_role("textbox", name="* Other Classification (").fill("Foreman")
         page.locator("#classPaid1").select_option("journeyman")
-        isFringe = False
+
+        if payroll["employee_name"] == "Nathan A Hayes":
+            isFringe = True
+        else:
+            isFringe = False
     
     
     if payrollInfo["work_pay_type_RT"]:
@@ -554,10 +559,11 @@ def _fillEmployeePayrollClass1(page: Page, payrollInfo, weekStart):
 
 
 
-def _fillEmployeePayrollClass2(page:Page, payrollInfo, weekStart, isPressedOT, isPressedDT):
+def _fillEmployeePayrollClass2(page:Page, payroll, weekStart, isPressedOT, isPressedDT):
     page.get_by_role("button", name="Add Craft/Classification/Level").click()
 
     page.wait_for_timeout(2000)
+    payrollInfo = payroll["class"][1]
 
     isFringe = False
     if payrollInfo["work_classification"] == "Laborer Grp 2":
@@ -598,7 +604,11 @@ def _fillEmployeePayrollClass2(page:Page, payrollInfo, weekStart, isPressedOT, i
         page.locator("#classPaid1").nth(1).select_option("3601f85687778ed4c837eb1e3fbb35c9")
         page.get_by_role("textbox", name="* Other Classification (").fill("Foreman")
         page.locator("#classPaid1").nth(2).select_option("journeyman")
-        isFringe = True
+
+        if payroll["employee_name"] == "Nathan A Hayes":
+            isFringe = True
+        else:
+            isFringe = False
     
     
     if payrollInfo["work_pay_type_RT"]:
@@ -758,9 +768,9 @@ def _fillEmployeePayroll(page: Page, payrollInfo, weekStart):
     page.locator("#positiveNumber_1").fill("")
     page.locator("#positiveNumber_1").fill(payrollInfo["work_pay_check_num"])
 
-    isOT, isDT = _fillEmployeePayrollClass1(page, payrollInfo["class"][0], weekStart)
+    isOT, isDT = _fillEmployeePayrollClass1(page, payrollInfo, weekStart)
     if len(payrollInfo["class"]) > 1:
-        _fillEmployeePayrollClass2(page, payrollInfo["class"][1], weekStart, isOT, isDT)
+        _fillEmployeePayrollClass2(page, payrollInfo, weekStart, isOT, isDT)
 
     # Federtal Tax
     taxFedButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
