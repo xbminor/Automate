@@ -2,6 +2,7 @@ node_modules/
 data_*
 log_*
 videos/
+Automate.code-workspace
 
 __pycache__/
 

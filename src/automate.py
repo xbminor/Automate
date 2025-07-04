@@ -579,7 +579,7 @@ def _fillEmployeePayrollClass2(page:Page, payroll, weekStart, isPressedOT, isPre
         page.locator("#classPaid1").nth(2).select_option("journeyman")
         isFringe = False
     
-    elif payrollInfo["work_classification"] == "Cement Mason":
+    elif payrollInfo["work_classification"] == "Cement Mason" or payrollInfo["work_classification"] == "CM Journeyman":
         page.locator("#craftPaid1").select_option("c7bbecb687644650c837eb1e3fbb3546")
         page.locator("#classPaid1").nth(1).select_option("0734d981dbc81a104489543ed39619e1")
         page.locator("#classPaid1").nth(2).select_option("journeyman")
