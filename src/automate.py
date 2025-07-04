@@ -348,6 +348,10 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
 
         ### ************************************************************************** ###
 
+        page.get_by_role("button", name="Save").click()
+        print(f"Completed payroll, now saving.")
+        page.wait_for_timeout(5000)
+
         return
 
     except Exception as e:
