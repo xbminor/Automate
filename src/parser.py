@@ -56,12 +56,11 @@ def _extract_employee_info(dataFrame, indexRow, indexCol, employeeTotal):
             "employee_address1": dataFrame.iloc[indexRow+2+3*i, indexCol],
             "employee_address2": dataFrame.iloc[indexRow+3+3*i, indexCol],
         }
+        data["employee_name"] = Util.format_name(data["employee_name"])
+
         # temp for misspelled name on Oliver Browner
         if data["employee_name"] == "Oliver K Bowner":
             data["employee_name"] = "Oliver K Browner"
-
-        if data["employee_name"] == "SERGIO VILLA":
-            data["employee_name"] = "Sergio Villa"
         
         names.append(data)
 
@@ -131,6 +130,9 @@ def _extract_employee_hours_paid(dataFrame, indexRow, indexCol, employeeTotal, s
         data["work_time_total_ot"] = emptyCellNumber if pd.isna(otTime) else Util.number_to_string(otTime)
         data["work_time_total_dt"] = emptyCellNumber if pd.isna(dtTime) else Util.number_to_string(dtTime)
 
+        data["work_pay_type_RT"] = True if data["work_time_total_rt"] != emptyCellNumber else False
+        data["work_pay_type_OT"] = True if data["work_time_total_ot"] != emptyCellNumber else False
+        data["work_pay_type_DT"] = True if data["work_time_total_dt"] != emptyCellNumber else False
 
         # Starting column of Paid Hours
         indexColTimePaid = indexCol + 9

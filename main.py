@@ -56,9 +56,9 @@ def run(playwright: Playwright) -> None:
 
     Automate.s0_log_in(page, USERNAME, PASSWORD, PATH_LOG_AUTOMATE)
     Automate.s1_dismiss_announcement(page, PATH_LOG_AUTOMATE)
-    #Automate.s1_project_dir_cpr_view(page, DIR, PATH_LOG_AUTOMATE)
-    #Automate.s2_payroll_index_id_open(page, PAY, PATH_LOG_AUTOMATE)
-    Automate.s1_project_dir_cpr_new(page, DIR, PATH_LOG_AUTOMATE)
+    Automate.s1_project_dir_cpr_view(page, DIR, PATH_LOG_AUTOMATE)
+    Automate.s2_payroll_index_id_open(page, PAY, PATH_LOG_AUTOMATE)
+    #Automate.s1_project_dir_cpr_new(page, DIR, PATH_LOG_AUTOMATE)
     Automate.s3_cpr_fill_from_open(page, currentDataSet, PATH_LOG_AUTOMATE)
 
     # ---------------------

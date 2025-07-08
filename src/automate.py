@@ -336,6 +336,9 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
             print("Section employee buttons is not matching employee count") 
         
         for i in range(len(employeeNavSectionButtons)):
+            # if employeeNavSectionButtons[i]["name"] == "Nathan Hayes":
+            #     continue
+
             employeePayrollToProcess = employees[employeeNavSectionButtons[i]["name"]]
             print(f"Entering payroll information for ({employeeNavSectionButtons[i]["name"]}).")
             employeeNavSectionButtons[i]["button"].click()
@@ -361,162 +364,99 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
     
 
 
-def _fillEmployeePayrollClass1(page: Page, payroll, weekStart):
+
+def _combox_select_option(container: Locator, strLabel: str, strOption: str):
+    label = container.get_by_text(strLabel)
+    combox = label.locator("xpath=following::select").first
+    combox.select_option(strOption)
+
+
+def _spin_fill(container: Locator, sectionTitle: str, listHours: list[dict]) -> list[Locator]:
+    label = container.get_by_text(sectionTitle)
+    spinbuttons = label.locator("xpath=following::input[@role='spinbutton']")
+    for i, spin in enumerate([spinbuttons.nth(i) for i in range(7)]):
+        spin.fill(listHours[i]["value"])
+
+
+
+def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, countClasses: int, sectionWorkClass: Locator):
+
     isFringe = False
-    boolIsOT = False
-    boolIsDT = False
-    payrollInfo = payroll["class"][0]
+    payrollInfo = payroll["class"][countClasses]
     if payrollInfo["work_classification"] == "Laborer Grp 2":
-        page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
-        page.locator("#classPaid0").select_option("5548654ddb0c1a104489543ed39619bc")
-        page.locator("#classPaid1").select_option("journeyman")
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Construction Laborers Including Bridge Laborers, General Laborers And Cleanup Laborers -")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = True
     
     elif payrollInfo["work_classification"] == "Operator Grp 3 N" or payrollInfo["work_classification"] == "Operator Grp 3":
-        page.locator("#craftPaid0").select_option("cfbbecb687644650c837eb1e3fbb3552")
-        page.locator("#classPaid0").select_option("3201f85687778ed4c837eb1e3fbb35cd")
-        page.locator("#classPaid1").select_option("journeyman")
-        page.locator("#other-classification").fill("Group 3")
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Operating Engineer (Heavy and Highway Work)")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Other (Please specify)")
+        texboxClass = sectionWorkClass.get_by_text("Other Classification (Please specify):") 
+        texboxClass.fill("Group 3")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = False
     
     elif payrollInfo["work_classification"] == "Cement Mason":
-        page.locator("#craftPaid0").select_option("c7bbecb687644650c837eb1e3fbb3546")
-        page.locator("#classPaid0").select_option("0734d981dbc81a104489543ed39619e1")
-        page.locator("#classPaid1").select_option("journeyman")
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Cement Mason")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Cement Mason -")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = False
 
     elif payrollInfo["work_classification"] == "DMP Truck Driver" or payrollInfo["work_classification"] == "Dump Truck Driver RT":
-        page.locator("#craftPaid0").select_option("47bbecb687644650c837eb1e3fbb3548")
-        page.locator("#classPaid0").select_option("ee01f85687778ed4c837eb1e3fbb35b7")
-        page.locator("#other-classification").fill("Dump Truck")
-        page.locator("#classPaid1").select_option("journeyman")
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Driver (On/Off-Hauling to/from Construction Site)")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Other (Please specify)")
+        texboxClass = sectionWorkClass.get_by_text("Other Classification (Please specify):") 
+        texboxClass.fill("Dump Truck")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = False
 
     elif payrollInfo["work_classification"] == "Apprentice" or payrollInfo["work_classification"] == "Apprentice 1":
-        page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
-        page.locator("#classPaid0").select_option("5548654ddb0c1a104489543ed39619bc")
-        page.locator("#classPaid1").select_option("apprentice")
-        page.get_by_role("combobox").nth(3).select_option("number:2")
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Construction Laborers Including Bridge Laborers, General Laborers And Cleanup Laborers -")
+        _combox_select_option(sectionWorkClass, "Level:", "Apprentice")
+        _combox_select_option(sectionWorkClass, "Apprentice Period:", "2")
         isFringe = True
     
     elif payrollInfo["work_classification"] == "Foreman" or payrollInfo["work_classification"] == "Foreman/Laborer":
-        page.locator("#craftPaid0").select_option("4bbbecb687644650c837eb1e3fbb354e")
-        page.locator("#classPaid0").select_option("3601f85687778ed4c837eb1e3fbb35c9")
-        page.get_by_role("textbox", name="* Other Classification (").fill("Foreman")
-        page.locator("#classPaid1").select_option("journeyman")
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Other (Please specify)")
+        texboxClass = sectionWorkClass.get_by_text("Other Classification (Please specify):") 
+        texboxClass.fill("Foreman")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
 
-        if payroll["employee_name"] == "Nathan A Hayes":
-            isFringe = True
-        else:
-            isFringe = False
+
+        isFringe = True if payroll["employee_name"] == "Nathan A Hayes" else False
     
     
     if payrollInfo["work_pay_type_RT"]:
-        # sunday
-        rtSunButton = page.locator(".div-table-cell.ng-scope").first.get_by_role("spinbutton")
-        rtSunButton.fill(payrollInfo["hours_rt"][0]["value"])
-
-        # monday
-        rtMonButton = page.locator(".div-table-body > div > div:nth-child(3)").first.get_by_role("spinbutton")
-        rtMonButton.fill(payrollInfo["hours_rt"][1]["value"])
-
-        # tuesday
-        rtTueButton = page.locator(".div-table-body > div > div:nth-child(4)").first.get_by_role("spinbutton")
-        rtTueButton.fill(payrollInfo["hours_rt"][2]["value"])
-
-        # wednesday
-        rtWedButton = page.locator(".div-table-body > div > div:nth-child(5)").first.get_by_role("spinbutton")
-        rtWedButton.fill(payrollInfo["hours_rt"][3]["value"])
-
-        # thursday
-        rtThuButton = page.locator(".div-table-body > div > div:nth-child(6)").first.get_by_role("spinbutton")
-        rtThuButton.fill(payrollInfo["hours_rt"][4]["value"])
-
-        # friday
-        rtFriButton = page.locator(".div-table-body > div > div:nth-child(7)").first.get_by_role("spinbutton")
-        rtFriButton.fill(payrollInfo["hours_rt"][5]["value"])
-
-        # saturday
-        rtSatButton = page.locator(".div-table-body > div > div:nth-child(8)").first.get_by_role("spinbutton")
-        rtSatButton.fill(payrollInfo["hours_rt"][6]["value"])
-
+        _spin_fill(sectionWorkClass, "Straight Time", payrollInfo["hours_rt"])
 
     if payrollInfo["work_pay_type_OT"]:
-        overtimeLink = page.get_by_role("link", name="Add Overtime").first
-        if overtimeLink and overtimeLink.is_enabled():
-            overtimeLink.click()
-            boolIsOT = True
+        linkOvertime = sectionWorkClass.get_by_role("link", name="Add Overtime")
+        if linkOvertime.is_visible():
+            linkOvertime.first.click()
+       
+        _spin_fill(sectionWorkClass, "Over Time", payrollInfo["hours_ot"])
         
-        # sunday
-        otSunButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(2)").get_by_role("spinbutton")
-        otSunButton.fill(payrollInfo["hours_ot"][0]["value"])
-
-        # monday
-        otMonButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(3)").get_by_role("spinbutton")
-        otMonButton.fill(payrollInfo["hours_ot"][1]["value"])
-
-        # tuesday
-        otTueButton = page.locator(".div-table-body > div:nth-child(2) > div:nth-child(4)").get_by_role("spinbutton")
-        otTueButton.fill(payrollInfo["hours_ot"][2]["value"])
-
-        # wednesday
-        otWedButton = page.locator("div:nth-child(2) > div:nth-child(5)").get_by_role("spinbutton")
-        otWedButton.fill(payrollInfo["hours_ot"][3]["value"])
-
-        # thursday
-        otThuButton = page.locator("div:nth-child(2) > div:nth-child(6)").get_by_role("spinbutton")
-        otThuButton.fill(payrollInfo["hours_ot"][4]["value"])
-
-        # friday
-        otFriButton = page.locator("div:nth-child(2) > div:nth-child(7)").get_by_role("spinbutton")
-        otFriButton.fill(payrollInfo["hours_ot"][5]["value"])
-
-        # saturday
-        otSatButton = page.locator("div:nth-child(2) > div:nth-child(8)").get_by_role("spinbutton")
-        otSatButton.fill(payrollInfo["hours_ot"][6]["value"])
-
-
     if payrollInfo["work_pay_type_DT"]:
-        doubletimeLink = page.get_by_role("link", name="Add Doubletime").first
-        if doubletimeLink and doubletimeLink.is_enabled():
-            doubletimeLink.click()
-            boolIsDT = True
-        
-        # sunday
-        dtSunButton = page.locator(".div-table-body > div:nth-child(3) > div:nth-child(2)").get_by_role("spinbutton")
-        dtSunButton.fill(payrollInfo["hours_dt"][0]["value"])
+        linkDoubletime = sectionWorkClass.get_by_role("link", name="Add Doubletime")
+        if linkDoubletime.is_visible():
+            linkDoubletime.first.click()
 
-        # monday
-        dtMonButton = page.locator(".div-table-body > div:nth-child(3) > div:nth-child(3)").get_by_role("spinbutton")
-        dtMonButton.fill(payrollInfo["hours_dt"][1]["value"])
-
-        # tuesday
-        dtTueButton = page.locator("div:nth-child(3) > div:nth-child(4)").get_by_role("spinbutton")
-        dtTueButton.fill(payrollInfo["hours_dt"][2]["value"])
-
-        # wednesday
-        dtWedButton = page.locator("div:nth-child(3) > div:nth-child(5)").get_by_role("spinbutton")
-        dtWedButton.fill(payrollInfo["hours_dt"][3]["value"])
-
-        # thursday
-        dtThuButton = page.locator("div:nth-child(3) > div:nth-child(6)").get_by_role("spinbutton")
-        dtThuButton.fill(payrollInfo["hours_dt"][4]["value"])
-
-        # friday
-        dtFriButton = page.locator("div:nth-child(3) > div:nth-child(7)").get_by_role("spinbutton")
-        dtFriButton.fill(payrollInfo["hours_dt"][5]["value"])
-
-        # saturday
-        dtSatButton = page.locator("div:nth-child(3) > div:nth-child(8)").get_by_role("spinbutton")
-        dtSatButton.fill(payrollInfo["hours_dt"][6]["value"])
+        _spin_fill(sectionWorkClass, "Double Time", payrollInfo["hours_dt"])
+    
     
 
-    # page.get_by_role("link", name="Remove Doubletime").click()
-    # page.get_by_role("link", name="Remove Overtime").click()
+    sectionFringe = page.locator(".journey-level-section")
+    listSpinFringe = [sectionFringe.get_by_role("spinbutton").nth(i) for i in range(20)]
+
+    sectionBenefit = page.locator(".benefit-question")
+    listCheckBenefit = [sectionBenefit.get_by_role("checkbox").nth(i) for i in range(4)]
 
     if isFringe:
-        page.locator("#fringePlan0").check()
-        page.locator("#fringeDirect0").uncheck()
+        listCheckBenefit[0+2*countClasses].check()
+        listCheckBenefit[1+2*countClasses].uncheck()
 
         fringeRates = None
         dateWeekStart = Util.string_to_date(weekStart)
@@ -524,277 +464,51 @@ def _fillEmployeePayrollClass1(page: Page, payroll, weekStart):
             if fringeRatePlan["start"] <= dateWeekStart <= fringeRatePlan["end"]:
                 fringeRates = fringeRatePlan["rates"]
 
-        # Health / Welfare 
-        fringeButtonHNW = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(2)").first.get_by_role("spinbutton")
-        fringeButtonHNW.fill(fringeRates["hnw"])
+        listSpinFringe[1+10*countClasses].fill(fringeRates["hnw"])
+        listSpinFringe[2+10*countClasses].fill(fringeRates["pen"])
+        listSpinFringe[3+10*countClasses].fill(fringeRates["vac"])
+        listSpinFringe[4+10*countClasses].fill(fringeRates["trn"])
+        listSpinFringe[5+10*countClasses].fill(fringeRates["oth"])
 
-        # Pension
-        fringeButtonPEN = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(3)").first.get_by_role("spinbutton")
-        fringeButtonPEN.fill(fringeRates["pen"])
-
-        # Vacation / Holiday
-        fringeButtonVAC = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(4)").first.get_by_role("spinbutton")
-        fringeButtonVAC.fill(fringeRates["vac"])
-
-        # Training
-        fringeButtonTRN = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(5)").first.get_by_role("spinbutton")
-        fringeButtonTRN.fill(fringeRates["trn"])
-
-        #Other
-        fringeButtonOTH = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(6)").first.get_by_role("spinbutton")
-        fringeButtonOTH.fill(fringeRates["oth"])
     else:
-        page.locator("#fringeDirect0").check()
-        page.locator("#fringePlan0").uncheck()
-
-    # RT Rate
-    fringeRTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
-    fringeRTRateButton.fill(payrollInfo["work_pay_rate_rt"])
-
-    # OT Rate
-    fringeOTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(7)").first.get_by_role("spinbutton")
-    fringeOTRateButton.fill(payrollInfo["work_pay_rate_ot"])
-
-    # DT Rate
-    fringeDTRateButton = page.locator(".div-table > .div-table-body > .div-table-row > div:nth-child(8)").first.get_by_role("spinbutton")
-    fringeDTRateButton.fill(payrollInfo["work_pay_rate_dt"])
-
-    return boolIsOT, boolIsDT
+        listCheckBenefit[0+2*countClasses].uncheck()
+        listCheckBenefit[1+2*countClasses].check()
 
 
+    listSpinFringe[0+10*countClasses].fill(payrollInfo["work_pay_rate_rt"])
+    listSpinFringe[6+10*countClasses].fill(payrollInfo["work_pay_rate_ot"])
+    listSpinFringe[7+10*countClasses].fill(payrollInfo["work_pay_rate_dt"])
 
-def _fillEmployeePayrollClass2(page:Page, payroll, weekStart, isPressedOT, isPressedDT):
-    page.get_by_role("button", name="Add Craft/Classification/Level").click()
-
-    page.wait_for_timeout(2000)
-    payrollInfo = payroll["class"][1]
-
-    isFringe = False
-    if payrollInfo["work_classification"] == "Laborer Grp 2":
-        page.locator("#craftPaid1").select_option("4bbbecb687644650c837eb1e3fbb354e")
-        page.locator("#classPaid1").nth(1).select_option("5548654ddb0c1a104489543ed39619bc")
-        page.locator("#classPaid1").nth(2).select_option("journeyman")
-        isFringe = True
-    
-    elif payrollInfo["work_classification"] == "Operator Grp 3 N" or payrollInfo["work_classification"] == "Operator Grp 3":
-        page.locator("#craftPaid1").select_option("cfbbecb687644650c837eb1e3fbb3552")
-        page.locator("#classPaid1").nth(1).select_option("3201f85687778ed4c837eb1e3fbb35cd")
-        page.get_by_role("textbox", name="* Other Classification (").fill("Group 3")
-        page.locator("#classPaid1").nth(2).select_option("journeyman")
-        isFringe = False
-    
-    elif payrollInfo["work_classification"] == "Cement Mason" or payrollInfo["work_classification"] == "CM Journeyman":
-        page.locator("#craftPaid1").select_option("c7bbecb687644650c837eb1e3fbb3546")
-        page.locator("#classPaid1").nth(1).select_option("0734d981dbc81a104489543ed39619e1")
-        page.locator("#classPaid1").nth(2).select_option("journeyman")
-        isFringe = False
-
-    elif payrollInfo["work_classification"] == "DMP Truck Driver" or payrollInfo["work_classification"] == "Dump Truck Driver RT":
-        page.locator("#craftPaid1").select_option("47bbecb687644650c837eb1e3fbb3548")
-        page.locator("#classPaid1").nth(1).select_option("ee01f85687778ed4c837eb1e3fbb35b7")
-        page.get_by_role("textbox", name="* Other Classification (").fill("Dump Truck")
-        page.locator("#classPaid1").nth(2).select_option("journeyman")
-        isFringe = False
-
-    elif payrollInfo["work_classification"] == "Apprentice" or payrollInfo["work_classification"] == "Apprentice 1":
-        page.locator("#craftPaid1").select_option("4bbbecb687644650c837eb1e3fbb354e")
-        page.locator("#classPaid1").nth(1).select_option("5548654ddb0c1a104489543ed39619bc")
-        page.locator("#classPaid1").nth(2).select_option("apprentice")
-        page.locator("div:nth-child(5) > .classification-paid-table > .ng-pristine").select_option("number:2")
-        isFringe = True
-    
-    elif payrollInfo["work_classification"] == "Foreman" or payrollInfo["work_classification"] == "Foreman/Laborer":
-        page.locator("#craftPaid1").select_option("4bbbecb687644650c837eb1e3fbb354e")
-        page.locator("#classPaid1").nth(1).select_option("3601f85687778ed4c837eb1e3fbb35c9")
-        page.get_by_role("textbox", name="* Other Classification (").fill("Foreman")
-        page.locator("#classPaid1").nth(2).select_option("journeyman")
-
-        if payroll["employee_name"] == "Nathan A Hayes":
-            isFringe = True
-        else:
-            isFringe = False
-    
-    
-    if payrollInfo["work_pay_type_RT"]:
-        # sunday
-        rtSunButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(2)").first.get_by_role("spinbutton")
-        rtSunButton.fill(payrollInfo["hours_rt"][0]["value"])
-
-        # monday
-        rtMonButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(3)").first.get_by_role("spinbutton")
-        rtMonButton.fill(payrollInfo["hours_rt"][1]["value"])
-
-        # tuesday
-        rtTueButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(4)").first.get_by_role("spinbutton")
-        rtTueButton.fill(payrollInfo["hours_rt"][2]["value"])
-
-        # wednesday
-        rtWedButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(5)").first.get_by_role("spinbutton")
-        rtWedButton.fill(payrollInfo["hours_rt"][3]["value"])
-
-        # thursday
-        rtThuButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(6)").first.get_by_role("spinbutton")
-        rtThuButton.fill(payrollInfo["hours_rt"][4]["value"])
-
-        # friday
-        rtFriButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(7)").first.get_by_role("spinbutton")
-        rtFriButton.fill(payrollInfo["hours_rt"][5]["value"])
-
-        # saturday
-        rtSatButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div > div:nth-child(8)").first.get_by_role("spinbutton")
-        rtSatButton.fill(payrollInfo["hours_rt"][6]["value"])
+    print(f"\tEntered: {payrollInfo["work_classification"]}")
 
 
-    if payrollInfo["work_pay_type_OT"]:
-        if isPressedOT:
-            overtimeLink = page.get_by_role("link", name="Add Overtime")
-        else:
-            overtimeLink = page.get_by_role("link", name="Add Overtime").nth(1)
-
-        if overtimeLink and overtimeLink.is_enabled():
-                overtimeLink.click()
-        
-        # sunday
-        otSunButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(2)").get_by_role("spinbutton")
-        otSunButton.fill(payrollInfo["hours_ot"][0]["value"])
-
-        # monday
-        otMonButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(3)").get_by_role("spinbutton")
-        otMonButton.fill(payrollInfo["hours_ot"][1]["value"])
-
-        # tuesday
-        otTueButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(4)").get_by_role("spinbutton")
-        otTueButton.fill(payrollInfo["hours_ot"][2]["value"])
-
-        # wednesday
-        otWedButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(5)").get_by_role("spinbutton")
-        otWedButton.fill(payrollInfo["hours_ot"][3]["value"])
-
-        # thursday
-        otThuButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(6)").get_by_role("spinbutton")
-        otThuButton.fill(payrollInfo["hours_ot"][4]["value"])
-
-        # friday
-        otFriButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(7)").get_by_role("spinbutton")
-        otFriButton.fill(payrollInfo["hours_ot"][5]["value"])
-
-        # saturday
-        otSatButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(2) > div:nth-child(8)").get_by_role("spinbutton")
-        otSatButton.fill(payrollInfo["hours_ot"][6]["value"])
-
-
-    if payrollInfo["work_pay_type_DT"]:
-        page.get_by_role("link", name="Add Doubletime").click()
-        if isPressedDT:
-            doubletimeLink = page.get_by_role("link", name="Add Doubletime")
-        else:
-            doubletimeLink = page.get_by_role("link", name="Add Doubletime").nth(1)
-
-        if doubletimeLink and doubletimeLink.is_enabled():
-            doubletimeLink.click()
-        
-        # sunday
-        dtSunButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(2)").get_by_role("spinbutton")
-        dtSunButton.fill(payrollInfo["hours_dt"][0]["value"])
-
-        # monday
-        dtMonButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(3)").get_by_role("spinbutton")
-        dtMonButton.fill(payrollInfo["hours_dt"][1]["value"])
-
-        # tuesday
-        dtTueButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(4)").get_by_role("spinbutton")
-        dtTueButton.fill(payrollInfo["hours_dt"][2]["value"])
-
-        # wednesday
-        dtWedButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(5)").get_by_role("spinbutton")
-        dtWedButton.fill(payrollInfo["hours_dt"][3]["value"])
-
-        # thursday
-        dtThuButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(6)").get_by_role("spinbutton")
-        dtThuButton.fill(payrollInfo["hours_dt"][4]["value"])
-
-        # friday
-        dtFriButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(7)").get_by_role("spinbutton")
-        dtFriButton.fill(payrollInfo["hours_dt"][5]["value"])
-
-        # saturday
-        dtSatButton = page.locator("div:nth-child(2) > .col-lg-12 > div > div > div > .div-table-body > div:nth-child(3) > div:nth-child(8)").get_by_role("spinbutton")
-        dtSatButton.fill(payrollInfo["hours_dt"][6]["value"])
-
-
-    if isFringe:
-        page.locator("#fringePlan1").check()
-        page.locator("#fringeDirect1").uncheck()
-
-        fringeRates = None
-        dateWeekStart = Util.string_to_date(weekStart)
-        for fringeRatePlan in FRINGE_RATES:
-            if fringeRatePlan["start"] <= dateWeekStart <= fringeRatePlan["end"]:
-                fringeRates = fringeRatePlan["rates"]
-
-        # Health / Welfare 
-        fringeButtonHNW = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(2)").get_by_role("spinbutton")
-        fringeButtonHNW.fill(fringeRates["hnw"])
-
-        # Pension
-        fringeButtonPEN = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(3)").get_by_role("spinbutton")
-        fringeButtonPEN.fill(fringeRates["pen"])
-
-        # Vacation / Holiday
-        fringeButtonVAC = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(4)").get_by_role("spinbutton")
-        fringeButtonVAC.fill(fringeRates["vac"])
-
-        # Training
-        fringeButtonTRN = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(5)").get_by_role("spinbutton")
-        fringeButtonTRN.fill(fringeRates["trn"])
-
-        #Other
-        fringeButtonOTH = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(6)").get_by_role("spinbutton")
-        fringeButtonOTH.fill(fringeRates["oth"])
-    else:
-        page.locator("#fringeDirect1").check()
-        page.locator("#fringePlan1").uncheck()
-
-    # RT Rate
-    fringeRTRateButton = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
-    fringeRTRateButton.fill(payrollInfo["work_pay_rate_rt"])
-
-    # OT Rate
-    fringeOTRateButton = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(7)").get_by_role("spinbutton")
-    fringeOTRateButton.fill(payrollInfo["work_pay_rate_ot"])
-
-    # DT Rate
-    fringeDTRateButton = page.locator("div:nth-child(2) > .col-lg-12 > div > .journey-level-section > .journey-level-table > .div-table > .div-table-body > .div-table-row > div:nth-child(8)").get_by_role("spinbutton")
-    fringeDTRateButton.fill(payrollInfo["work_pay_rate_dt"])
 
 
 def _fillEmployeePayroll(page: Page, payrollInfo, weekStart):
     page.locator("#positiveNumber_1").fill("")
     page.locator("#positiveNumber_1").fill(payrollInfo["work_pay_check_num"])
-
-    isOT, isDT = _fillEmployeePayrollClass1(page, payrollInfo, weekStart)
+    
+    sectionWorkClass1 = page.locator(".classification-section").first
+    sectionWorkClass2 = page.get_by_text("Remove Classification * Craft")
+    
+    _fillEmployeePayrollClass(page, payrollInfo, weekStart, 0, sectionWorkClass1)
     if len(payrollInfo["class"]) > 1:
-        _fillEmployeePayrollClass2(page, payrollInfo, weekStart, isOT, isDT)
+        if sectionWorkClass2.is_hidden():
+            page.locator(".add-classification").first.click()
 
-    # Federtal Tax
-    taxFedButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div").first.get_by_role("spinbutton")
-    taxFedButton.fill(payrollInfo["work_pay_tax_fed"])
+        _fillEmployeePayrollClass(page, payrollInfo, weekStart, 1, sectionWorkClass2)
 
-    # FICA
+    sectionDeduction = page.get_by_text("Deductions (per payroll) Federal Tax FICA (Soc. Sec.) State Tax SDI Dues Fund/")
+    listSpinDeduction = [sectionDeduction.get_by_role("spinbutton").nth(i) for i in range(4)]
     fica = f"{float(payrollInfo['work_pay_tax_social']) + float(payrollInfo['work_pay_tax_medic']):.2f}"
-    taxFICAButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div:nth-child(2)").get_by_role("spinbutton")
-    taxFICAButton.fill(fica)
 
-    # State Tax
-    taxStateButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div:nth-child(3)").get_by_role("spinbutton")
-    taxStateButton.fill(payrollInfo["work_pay_tax_state"])
-
-    #SDI
-    taxSDIButton = page.locator("div:nth-child(2) > .div-table-body > .div-table-row > div:nth-child(4)").get_by_role("spinbutton")
-    taxSDIButton.fill(payrollInfo["work_pay_tax_other"])
+    listSpinDeduction[0].fill(payrollInfo["work_pay_tax_fed"])
+    listSpinDeduction[1].fill(fica)
+    listSpinDeduction[2].fill(payrollInfo["work_pay_tax_state"])
+    listSpinDeduction[3].fill(payrollInfo["work_pay_tax_other"])
 
     # Gross wages
-    grossWageButton = page.locator(".wages-section > .div-table > .div-table-body > .div-table-row > .div-table-cell").first.get_by_role("textbox")
+    grossWageButton =  page.locator("#positiveNumber_12")
     grossWageButton.fill(payrollInfo["work_pay_gross_total"])
 
     page.locator(".main-content").click()

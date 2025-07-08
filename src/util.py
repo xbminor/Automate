@@ -55,3 +55,13 @@ def number_to_string(value) -> str:
 
 def string_to_date(date: str) -> datetime:
     return datetime.strptime(date, "%Y-%m-%d").date()
+
+
+def format_name(fullName: str) -> str:
+    def capitalize_first_letter(part):
+        # cap every word boundary
+        part = re.sub(r"\b(\w)", lambda m: m.group(1).upper(), part.lower())
+        return part
+
+    parts = fullName.strip().split()
+    return " ".join(capitalize_first_letter(part) for part in parts)
