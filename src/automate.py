@@ -137,9 +137,6 @@ def s1_project_dir_cpr_new(page: Page, dir: str, logPath: str) -> Locator:
         return None
 
 
-# "pay": "PRRUN2500232"
-
-# page.locator("button").filter(has_text="Submit Manual eCPR").click()
 def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
     try:
         id = id.strip()
