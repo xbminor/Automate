@@ -32,11 +32,15 @@ with open(r".\config.json", "r") as configFile:
 
 USERNAME = config["username"]
 PASSWORD = config["password"]
-DIR = config["dir"]
-PAY = config["pay"]
+PROJECT_DIR = config["project_dir"]
+CPR_OPEN = config["cpr_open"]
+CPR_ID = config["cpr_id"]
+PRIME_ID = config["prime_id"]
+PRIME_NAME = config["prime_name"]
+CPR_NON_WORK = config["cpr_non_work"]
 
 
-xlsxList = [file for file in os.listdir(pathFolderInData) if file.endswith(".xlsx")]
+xlsxList = [file for file in os.listdir(pathFolderInData) if file.endswith(".xlsx") or file.endswith(".xlsm")]
 parsedData = Parser.parse_cpr_xlsx_bulk(xlsxList, pathFolderInData, pathFolderOutData, PATH_LOG_PARSER)
 
 currentDataSet = parsedData[0]
@@ -56,10 +60,17 @@ def run(playwright: Playwright) -> None:
 
     Automate.s0_log_in(page, USERNAME, PASSWORD, PATH_LOG_AUTOMATE)
     Automate.s1_dismiss_announcement(page, PATH_LOG_AUTOMATE)
-    Automate.s1_project_dir_cpr_view(page, DIR, PATH_LOG_AUTOMATE)
-    Automate.s2_payroll_index_id_open(page, PAY, PATH_LOG_AUTOMATE)
-    #Automate.s1_project_dir_cpr_new(page, DIR, PATH_LOG_AUTOMATE)
-    Automate.s3_cpr_fill_from_open(page, currentDataSet, PATH_LOG_AUTOMATE)
+
+    if CPR_OPEN:
+        Automate.s1_project_dir_cpr_view(page, PROJECT_DIR, PATH_LOG_AUTOMATE)
+        Automate.s2_cpr_index_id_open(page, CPR_ID, PATH_LOG_AUTOMATE)
+    else:
+        Automate.s1_project_dir_cpr_new(page, PROJECT_DIR, PATH_LOG_AUTOMATE)
+    
+    if CPR_NON_WORK:
+        Automate.s3_cpr_fill_non_work(page, PRIME_ID, PRIME_NAME, currentDataSet, PATH_LOG_AUTOMATE)
+    else:
+        Automate.s3_cpr_fill(page, PRIME_ID, PRIME_NAME, currentDataSet, PATH_LOG_AUTOMATE)
 
     # ---------------------
     context.close()

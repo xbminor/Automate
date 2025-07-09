@@ -137,7 +137,7 @@ def s1_project_dir_cpr_new(page: Page, dir: str, logPath: str) -> Locator:
         return None
 
 
-def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
+def s2_cpr_index_id_open(page: Page, id: str, logPath: str) -> bool:
     try:
         id = id.strip()
 
@@ -145,7 +145,7 @@ def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
         page.wait_for_selector('text=Payroll Runs', timeout=5000)
 
         # Find the matching row that contains the correct rowheader as id
-        msg = f"<s2_payroll_index_id_open> Indexing 'Payroll Runs' for matching Payroll ID as ({id})."
+        msg = f"<s2_cpr_index_id_open> Indexing 'Payroll Runs' for matching Payroll ID as ({id})."
         Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
         while True:
@@ -166,24 +166,76 @@ def s2_payroll_index_id_open(page: Page, id: str, logPath: str) -> bool:
         expect(payrollRowHeaderCell).to_have_text(id, timeout=5000)
 
         idMatch = payrollRowHeaderCell.text_content().strip()
-        msg = f"<s2_payroll_index_id_open> Found matching ID ({idMatch}), opening eCPR."
+        msg = f"<s2_cpr_index_id_open> Found matching ID ({idMatch}), opening eCPR."
         Util.log_message(Util.STATUS_CODES.PASS, msg, logPath, True)
 
         payrollRow.get_by_role("button", name="Open eCPR", exact=True).click()
         return True
     
     except Exception as e:
-        msg = f"<s2_payroll_index_id_open> ({id}): {e}."
+        msg = f"<s2_cpr_index_id_open> ({id}): {e}."
         Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
         return False
 
 
 
-def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
-    fakeData = {
-        "primeCode" : "113061",
-        "primeName" : "HARRIS CONSTRUCTION CO INC",
-    }
+def s3_cpr_fill_non_work(page: Page, primeId: str, primeName: str, data: dict, logPath: str) -> bool:
+    header = data["header"]
+
+    try:
+        ### ****************************** Payroll Setup ***************************** ### 
+
+        workPerformanceButton = page.get_by_text("Non-Performance No work was").get_by_role("radio")
+        if workPerformanceButton.is_disabled():
+            msg = f"<s3_cpr_fill_from_open> Work performace is disabled."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+        else:
+            workPerformanceButton.check()
+            msg = f"<s3_cpr_fill_from_open> Work performace is set to regular."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+
+
+        finalPayrollButton = page.get_by_role("radio", name="No", exact=True)
+        if finalPayrollButton.is_disabled():
+            msg = f"<s3_cpr_fill_from_open> Final payroll is disabled."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+        else:
+            msg = f"<s3_cpr_fill_from_open> Final payroll is set to No."
+            Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+            finalPayrollButton.check()
+
+        clearButton = page.get_by_role("button", name="Clear field subcontractor")
+        if clearButton.is_visible():
+            clearButton.click()
+    
+        page.get_by_role("link", name="Lookup using list").click()
+        page.get_by_label("", exact=True).fill(primeId)
+
+        page.get_by_role("option", name=primeName).click()
+        msg = f"<s3_cpr_fill_from_open> Contract with ({primeName}) as ({primeId})."
+        Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
+
+        page.locator(".main-content").click()
+        page.get_by_role("button", name="Save").click()
+        print(f"Completed payroll, now saving.")
+        page.wait_for_timeout(5000)
+
+
+        ### ************************************************************************** ###
+    
+    except Exception as e:
+        msg = f"<s3_cpr_fill_from_open>: {e}."
+        Util.log_message(Util.STATUS_CODES.FAIL, msg, logPath, True)
+        return None
+    
+    
+
+
+
+
+
+
+def s3_cpr_fill(page: Page, primeId: str, primeName: str, data: dict, logPath: str) -> bool:
     header = data["header"]
     employees = data["employees"]
     employeeNames = [employee for employee in employees]
@@ -221,10 +273,10 @@ def s3_cpr_fill_from_open(page: Page, data: dict, logPath: str) -> bool:
             clearButton.click()
     
         page.get_by_role("link", name="Lookup using list").click()
-        page.get_by_label("", exact=True).fill(fakeData["primeCode"])
+        page.get_by_label("", exact=True).fill(primeId)
 
-        page.get_by_role("option", name=fakeData["primeName"]).click()
-        msg = f"<s3_cpr_fill_from_open> Contract with ({fakeData['primeName']}) as ({fakeData['primeCode']})."
+        page.get_by_role("option", name=primeName).click()
+        msg = f"<s3_cpr_fill_from_open> Contract with ({primeName}) as ({primeId})."
         Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
 
@@ -400,7 +452,7 @@ def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, c
         _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = False
 
-    elif payrollInfo["work_classification"] == "DMP Truck Driver" or payrollInfo["work_classification"] == "Dump Truck Driver RT":
+    elif payrollInfo["work_classification"] == "DMP Truck Driver" or payrollInfo["work_classification"] == "Dump Truck Driver RT" or payrollInfo["work_classification"] == "Dump Truck Driver":
         _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Driver (On/Off-Hauling to/from Construction Site)")
         _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Other (Please specify)")
         texboxClass = sectionWorkClass.get_by_text("Other Classification (Please specify):") 
@@ -408,7 +460,7 @@ def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, c
         _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = False
 
-    elif payrollInfo["work_classification"] == "Apprentice" or payrollInfo["work_classification"] == "Apprentice 1":
+    elif payrollInfo["work_classification"] == "Apprentice" or payrollInfo["work_classification"] == "Apprentice 1" or payrollInfo["work_classification"] == "Apprentice Period 1":
         _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")
         _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Construction Laborers Including Bridge Laborers, General Laborers And Cleanup Laborers -")
         _combox_select_option(sectionWorkClass, "Level:", "Apprentice")
