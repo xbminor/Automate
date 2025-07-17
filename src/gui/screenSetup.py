@@ -12,12 +12,16 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QFileSystemWatcher
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
-from src.gui.screenSession import WindowSession
 
+from playwright.sync_api import Playwright, sync_playwright
 
 import src.gui.widgets as Widgets
+import src.automate as Automate
 from src.parser import gui_parse_cpr_xlsx_bulk
 from src.renamer import gui_bulk_file_index_by_date
+
+with open(r".\config.json", "r") as configFile: 
+    config = json.load(configFile)
 
 styleLabels = """ QLabel {
     font-size: 11pt;
@@ -172,23 +176,14 @@ class PanelSession(QWidget):
 
         projectTextLabel = "Project DIR:"
         projectTextTemp = "Please type or select Project DIR or Name"
-        projectTextList = [
+        listTextProject = [
             "",
             "506809 - Sanger Complex III - HARRIS CONSTRUCTION CO INC",
             "506782 - Sanger Aquatics - HARRIS CONSTRUCTION CO INC",
             "496589 - Parlier High - BMY Construction Group, Inc.",
             "493551 - Avenal Tamarack - BMY Construction Group, Inc."
         ]
-        self.widgetComboxProject = Widgets.Combox(projectTextLabel, projectTextTemp, projectTextList, (90, 30))
-
-        labelPrime = "Prime:"
-        listPrime = [
-            "",
-            "113061 - HARRIS CONSTRUCTION CO INC",
-            "686178 - BMY Construction Group, Inc.",
-        ]
-        textPrime = "Please type or select Prime ID or Name"
-        self.widgetComboxPrime = Widgets.Combox(labelPrime, textPrime, listPrime, (90, 30))
+        self.widgetComboxProject = Widgets.Combox(projectTextLabel, projectTextTemp, listTextProject, (90, 30))
 
         self.pathFolderList = pathFolderList
         self.pathLog = pathLog
@@ -200,9 +195,7 @@ class PanelSession(QWidget):
         self.widgetAddFiles = Widgets.ButtonFolderAddFiles(self.pathFolderList, "Add Files", (90, 30))
 
         self.listEntryData = None
-        self.entryName = ""
-        self.entryProject = ""
-        self.entryPrime = ""
+        self.entryConfig = None
     
         self.widgetLoad = Widgets.Button(self.load, "Load", (110, 30))
         self.widgetEntryName = QLabel("Entry: None")
@@ -219,7 +212,6 @@ class PanelSession(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.widgetTitle)
         layout.addWidget(self.widgetComboxProject)
-        layout.addWidget(self.widgetComboxPrime)
 
         layoutFrame = QHBoxLayout()
 
@@ -266,27 +258,59 @@ class PanelSession(QWidget):
             if len(listFolder) == 0:
                 return None
 
-            self.entryName = listFolder[0]
-            self.entryProject = self.widgetComboxProject.combox.currentText().strip()
-            self.entryPrime = self.widgetComboxPrime.combox.currentText().strip()
+            fileName = listFolder[0]
+            textProject = self.widgetComboxProject.combox.currentText().strip()
+            self.entryConfig = config.get(textProject)
+            textPrime = self.entryConfig["prime_name"]
 
-            pathFull = os.path.join(self.pathFolderList, self.entryName)
-
-            self.widgetEntryName.setText(f"Entry: {self.entryName}")
-            self.widgetEntryProject.setText(f"Project: {self.entryProject}")
-            self.widgetEntryPrime.setText(f"Prime: {self.entryPrime}")
+            self.widgetEntryName.setText(f"Entry: {fileName}")
+            self.widgetEntryProject.setText(f"Project: {textProject}")
+            self.widgetEntryPrime.setText(f"Prime: {textPrime}")
+            
+            pathFull = os.path.join(self.pathFolderList, fileName)
 
             with open(pathFull, "r", encoding="utf-8") as file:
                 self.listEntryData = json.load(file)
 
     def start(self):
-        config = {
-            "entry_name": self.entryName,
-            "entry_project": self.entryProject,
-            "entry_prime": self.entryPrime,
-        }
+        USERNAME = config["username"]
+        PASSWORD = config["password"]
+        PROJECT_DIR = self.entryConfig["project"]
+        PRIME_ID = self.entryConfig["prime"]
+        PRIME_NAME = self.entryConfig["prime_name"]
+        CPR_OPEN = config["cpr_open"]
+        CPR_ID = config["cpr_id"]
 
-        print(config)
+        CPR_NON_WORK = config["cpr_non_work"]
+
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=False)
+            context = browser.new_context(
+            viewport={"width":1280, "height":1440},
+            # viewport={"width":960, "height":1080},
+            # record_video_dir="videos",
+            # record_video_size={"width":960, "height":1080}
+            )
+            page = context.new_page()
+            page.goto("https://services.dir.ca.gov/gsp")
+
+            Automate.s0_log_in(page, USERNAME, PASSWORD, self.pathLog)
+            Automate.s1_dismiss_announcement(page, self.pathLog)
+
+            if CPR_OPEN:
+                Automate.s1_project_dir_cpr_view(page, PROJECT_DIR, self.pathLog)
+                Automate.s2_cpr_index_id_open(page, CPR_ID, self.pathLog)
+            else:
+                Automate.s1_project_dir_cpr_new(page, PROJECT_DIR, self.pathLog)
+    
+            # if CPR_NON_WORK:
+            #     Automate.s3_cpr_fill_non_work(page, PRIME_ID, PRIME_NAME, self.listEntryData, self.pathLog)
+            # else:
+            #     Automate.s3_cpr_fill(page, PRIME_ID, PRIME_NAME, self.listEntryData, self.pathLog)
+
+            context.close()
+            browser.close()
 
 
 
