@@ -266,11 +266,11 @@ def _handle_header(cell, indexRow, indexCol, dataFrame, header):
 
 
 
-def parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData, pathLogParser):
+def parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathLogParser):
     dataFrame = pd.read_excel(pathInputSheet, engine='openpyxl', header=None)
 
-    with open(os.path.join(f"{pathOutputData}_frame", f"Frame_{sheet}.txt"), "w") as outputFrame:
-        outputFrame.write(dataFrame.to_string(index=True))
+    # with open(os.path.join(f"{pathOutputData}_frame", f"Frame_{sheet}.txt"), "w") as outputFrame:
+    #     outputFrame.write(dataFrame.to_string(index=True))
 
     header = {}
     employees = []
@@ -298,12 +298,16 @@ def parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData, pathLogParser):
 
 def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
     allParsedData = []
+
+    print("in:", pathInputData)
+    print("out", pathOutputData)
     
     for sheet in xlsxSheets:
         pathInputSheet = os.path.join(pathInputData, sheet)
+        print("loop path:", pathInputSheet)
 
         try:
-            frame, header, employees = parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathOutputData, pathLogParser)
+            frame, header, employees = parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathLogParser)
             msg = f"<parse_cpr_xlsx_bulk> Parsed {len(employees)} employees from ({sheet})."
             Util.log_message(Util.STATUS_CODES.PASS, msg, pathLogParser, True)
         except Exception as e:
@@ -336,7 +340,56 @@ def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: st
             "employees": parsedEmployeeData
         }
 
-        with open(os.path.join(f"{pathOutputData}_parse", f"Parsed_{sheet}.json"), "w") as parsedCPR:
+        with open(os.path.join(f"{pathOutputData}", f"Parsed_{sheet}.json"), "w") as parsedCPR:
+            json.dump(parsedData, parsedCPR, indent=2, ensure_ascii=False)
+
+        allParsedData.append(parsedData)
+
+    return allParsedData
+
+
+
+def gui_parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
+    allParsedData = []
+    
+    for sheet in xlsxSheets:
+        pathInputSheet = os.path.join(pathInputData, sheet)
+
+        try:
+            frame, header, employees = parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathLogParser)
+            msg = f"<parse_cpr_xlsx_bulk> Parsed {len(employees)} employees from ({sheet})."
+            Util.log_message(Util.STATUS_CODES.PASS, msg, pathLogParser, True)
+        except Exception as e:
+            msg = f"<parse_cpr_xlsx_bulk> Failed to parse ({sheet}): {e}."
+            Util.log_message(Util.STATUS_CODES.FAIL, msg, pathLogParser, True)
+            continue
+
+
+        parsedEmployeeData = {}
+        for employeeData in employees:
+            name = Util.name_trim_middle(employeeData.get("employee_name", ""))
+            if name == "":
+                return
+            
+            keySearch = ["employee_name", "employee_address1", "employee_address2", "employee_ssn", "work_pay_check_num",
+                        "work_pay_gross_total", "work_pay_tax_social", "work_pay_tax_medic", "work_pay_tax_fed", 
+                        "work_pay_tax_state", "work_pay_tax_other", "work_pay_deduct_total", "work_pay_net"]
+
+            dataEmployeeOther = {key: employeeData[key] for key in keySearch if key in employeeData}
+            dataEmployeeClass = {key: employeeData[key] for key in employeeData if key not in keySearch}
+
+            if name not in parsedEmployeeData:
+                parsedEmployeeData[name] = dataEmployeeOther
+                parsedEmployeeData[name]["class"] = []
+            
+            parsedEmployeeData[name]["class"].append(dataEmployeeClass)
+
+        parsedData = {
+            "header": header,
+            "employees": parsedEmployeeData
+        }
+
+        with open(os.path.join(f"{pathOutputData}", f"Parsed_{sheet}.json"), "w") as parsedCPR:
             json.dump(parsedData, parsedCPR, indent=2, ensure_ascii=False)
 
         allParsedData.append(parsedData)

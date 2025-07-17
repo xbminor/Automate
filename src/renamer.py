@@ -5,6 +5,13 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 
+dictProjectNames = {
+    "506809" : "Sanger Complex III",
+    "506782" : "Sanger Aquatics",
+    "496589" : "Parlier High",
+    "493551" : "Avenal Tamarack",
+}
+
 
 def extract_date(fileName: str):
     """
@@ -22,7 +29,7 @@ def extract_date(fileName: str):
         return None
 
 
-def gui_bulk_file_index_by_date(pathFolderInput: str, pathFolderOutput: str, startIndex: int = 1):
+def gui_bulk_file_index_by_date(pathFolderInput: str, startIndex: int = 1):
     listFileNames = [f for f in os.listdir(pathFolderInput) if os.path.isfile(os.path.join(pathFolderInput, f))]
 
     # Group files by date
@@ -56,7 +63,7 @@ def gui_bulk_file_index_by_date(pathFolderInput: str, pathFolderOutput: str, sta
         return
 
     for oldName, newName in plannedRenames:
-        os.rename(os.path.join(pathFolderInput, oldName), os.path.join(pathFolderOutput, newName))
+        os.rename(os.path.join(pathFolderInput, oldName), os.path.join(pathFolderInput, newName))
     
     print("Operation complete.")
 

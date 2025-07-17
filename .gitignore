@@ -1,6 +1,6 @@
 node_modules/
-data_*
-log_*
+data*
+log*
 videos/
 Automate.code-workspace
 

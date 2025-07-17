@@ -1,13 +1,13 @@
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QStackedLayout
 
-from src.gui.screenIndexFiles import IndexFilesScreen
+from src.gui.screenSetup import IndexFilesScreen
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("DIR eCPR Automation")
+        self.setWindowTitle("eCPR Automation - Setup Run")
         self.resize(900, 500)
 
         self.dirNumber = None
