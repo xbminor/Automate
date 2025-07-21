@@ -464,7 +464,7 @@ def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, c
         _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")
         _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Construction Laborers Including Bridge Laborers, General Laborers And Cleanup Laborers -")
         _combox_select_option(sectionWorkClass, "Level:", "Apprentice")
-        _combox_select_option(sectionWorkClass, "Apprentice Period:", "2")
+        #_combox_select_option(sectionWorkClass, "Apprentice Period:", "2")
         isFringe = True
     
     elif payrollInfo["work_classification"] == "Foreman" or payrollInfo["work_classification"] == "Foreman/Laborer":
@@ -476,6 +476,14 @@ def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, c
 
 
         isFringe = True if payroll["employee_name"] == "Nathan A Hayes" else False
+    
+    elif payrollInfo["work_classification"] == "Supervisor":
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Other (Please specify)")
+        texboxClass = sectionWorkClass.get_by_text("Other Classification (Please specify):") 
+        texboxClass.fill("Supervisor")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
+        isFringe = False
     
     
     if payrollInfo["work_pay_type_RT"]:

@@ -129,6 +129,7 @@ class PanelParser(QWidget):
         self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
 
         self.widgetClear = Widgets.ButtonFolderClear(self.pathFolderList, "Clear Folder", (90, 30))
+        self.widgetPop = Widgets.ButtonFolderPop(self.pathFolderList, "Delete First", (90, 30))
         self.widgetOpen = Widgets.ButtonFolderOpen(self.pathFolderList, "Open Folder", (90, 30))
         self.widgetAddFiles = Widgets.ButtonFolderAddFiles(self.pathFolderList, "Add Files", (90, 30))
 
@@ -145,6 +146,7 @@ class PanelParser(QWidget):
         
         layoutListButtons = QHBoxLayout()
         layoutListButtons.addWidget(self.widgetClear, alignment=Qt.AlignLeft)
+        layoutListButtons.addWidget(self.widgetPop)
         layoutListButtons.addStretch()
         layoutListButtons.addWidget(self.widgetOpen)
         layoutListButtons.addWidget(self.widgetAddFiles, alignment=Qt.AlignRight)
@@ -178,10 +180,12 @@ class PanelSession(QWidget):
         projectTextTemp = "Please type or select Project DIR or Name"
         listTextProject = [
             "",
+            "20240559364 - Hawthorne - HARRIS CONSTRUCTION CO INC",
             "506809 - Sanger Complex III - HARRIS CONSTRUCTION CO INC",
             "506782 - Sanger Aquatics - HARRIS CONSTRUCTION CO INC",
             "496589 - Parlier High - BMY Construction Group, Inc.",
-            "493551 - Avenal Tamarack - BMY Construction Group, Inc."
+            "496574 - Parlier Jr - BMY Construction Group, Inc.",
+            "493551 - Avenal Tamarack - BMY Construction Group, Inc.",
         ]
         self.widgetComboxProject = Widgets.Combox(projectTextLabel, projectTextTemp, listTextProject, (90, 30))
 
@@ -304,10 +308,10 @@ class PanelSession(QWidget):
             else:
                 Automate.s1_project_dir_cpr_new(page, PROJECT_DIR, self.pathLog)
     
-            # if CPR_NON_WORK:
-            #     Automate.s3_cpr_fill_non_work(page, PRIME_ID, PRIME_NAME, self.listEntryData, self.pathLog)
-            # else:
-            #     Automate.s3_cpr_fill(page, PRIME_ID, PRIME_NAME, self.listEntryData, self.pathLog)
+            if CPR_NON_WORK:
+                Automate.s3_cpr_fill_non_work(page, PRIME_ID, PRIME_NAME, self.listEntryData, self.pathLog)
+            else:
+                Automate.s3_cpr_fill(page, PRIME_ID, PRIME_NAME, self.listEntryData, self.pathLog)
 
             context.close()
             browser.close()
