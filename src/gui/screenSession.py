@@ -124,6 +124,12 @@ class PanelSession(QWidget):
         self.widgetRun = Widgets.Button(self.run, "Run Entry")
         self.widgetNext = Widgets.Button(self.next, "Next Entry")
 
+         
+        self.widgetInputCPR = Widgets.InputFieldLine("CPR ID", (240,30), (120, 30))
+        self.widgetInputCPR.input.setPlaceholderText("FOR OPEN CPR ONLY")
+        self.widgetInputDateStart = Widgets.InputFieldLine("Week Start", (240,30), (120, 30))
+        self.widgetInputDateEnd = Widgets.InputFieldLine("Week End", (240,30), (120, 30))
+
         self.sessionConfig = None
         self.sessionEntryData = None
         
@@ -132,19 +138,28 @@ class PanelSession(QWidget):
         layout.addWidget(self.widgetTitle)
 
         layoutSession = QHBoxLayout()
-
         layoutSessionEntry = QVBoxLayout()
         layoutSessionEntry.addWidget(self.widgetEntryName)
         layoutSessionEntry.addWidget(self.widgetEntryProject)
         layoutSessionEntry.addWidget(self.widgetEntryPrime)
         layoutSession.addLayout(layoutSessionEntry)
 
-        layoutSessionButtons = QHBoxLayout()
-        layoutSessionButtons.addWidget(self.widgetRun)
-        layoutSessionButtons.addWidget(self.widgetNext)
-        layoutSession.addLayout(layoutSessionButtons)
+        layoutSession.addStretch()
 
+        layoutSessionOptions = QVBoxLayout()
+        layoutSessionOptions.addWidget(self.widgetInputCPR)
+        layoutSessionOptions.addWidget(self.widgetInputDateStart)
+        layoutSessionOptions.addWidget(self.widgetInputDateEnd)
+        layoutSession.addLayout(layoutSessionOptions)
         layout.addLayout(layoutSession)
+
+
+        layoutControls = QHBoxLayout()
+        layoutControls.addWidget(self.widgetRun)
+        layoutControls.addWidget(self.widgetNext)
+        layout.addLayout(layoutControls)
+
+
 
         self.setLayout(layout)
 
@@ -163,10 +178,6 @@ class PanelSession(QWidget):
 
         self.configUser = config["username"]
         self.configPass = config["password"]
-
-        self.configIsOpen = config["cpr_open"]
-        self.configCPRId = config["cpr_id"]
-        self.configNonWork = config["cpr_non_work"]
 
     def set_session_config(self, _project: str):
         if not isinstance(_project, str):
@@ -188,6 +199,13 @@ class PanelSession(QWidget):
 
 
     def run(self):
+        self.configCPRId = self.widgetInputCPR.input.text().strip()
+        self.configIsOpen = False if self.configCPRId == "" else True
+        self.configNonWork = (
+            self.widgetInputDateStart.input.text().strip() != "" and 
+            self.widgetInputDateStart.input.text().strip() != ""
+        )
+
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=False)
             context = browser.new_context(
@@ -218,8 +236,14 @@ class PanelSession(QWidget):
 
 
     def next(self):
-        if Widgets._pop_from_folder(self.pathFolderList):
-            self.set_session_data()
+        self.widgetInputCPR.input.clear()
+        self.widgetInputDateStart.input.clear()
+        self.widgetInputDateEnd.input.clear()
+
+        if self.configNonWork == False:
+            if Widgets._pop_from_folder(self.pathFolderList):
+                self.set_session_data()
+    
         
 
 

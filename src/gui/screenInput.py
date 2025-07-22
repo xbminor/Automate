@@ -34,6 +34,7 @@ class PanelIndexer(QWidget):
         self.widgetTitle.setStyleSheet(styleTitle)
         
         self.widgetInputField = Widgets.InputFieldLine("Starting index", (30,30), (120, 30))
+        self.widgetInputField.input.setText(str(1))
 
         self.pathFolderList = pathFolderList
         self.pathFolderNext = pathFolderNext

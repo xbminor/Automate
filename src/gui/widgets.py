@@ -278,7 +278,6 @@ class InputFieldLine(QWidget):
         super().__init__()
 
         self.input = QLineEdit()
-        self.input.setText(str(1))
         if sizeField != None:
             self.input.setFixedSize(sizeField[0], sizeField[1])
 
@@ -288,8 +287,8 @@ class InputFieldLine(QWidget):
             self.label.setFixedSize(sizeLabel[0], sizeLabel[1])
 
         layout = QHBoxLayout()
-        layout.addWidget(self.input)
         layout.addWidget(self.label)
+        layout.addWidget(self.input)
 
         self.setLayout(layout)
         
