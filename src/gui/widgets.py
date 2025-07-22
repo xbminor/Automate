@@ -88,6 +88,24 @@ def _copy_files_to_folder(pathFile: str, pathFolder: str) -> bool:
         return False
 
 
+def _pop_from_folder(pathFolder: str):
+    if os.path.exists(pathFolder):
+        listFolder = sorted(os.listdir(pathFolder))
+        if len(listFolder) == 0:
+            return False
+            
+    fileName = listFolder[0]
+    pathfile = os.path.join(pathFolder, fileName)
+            
+    try:
+        os.remove(pathfile)
+        print(f"Removed: {fileName}")
+        return True
+    except Exception as e:
+        print(f"Failed to remove {fileName}: {e}")        
+        return False
+
+
 
 class Button(QPushButton):
     def __init__(self, onClicked, label: str=None, size: tuple=None) -> None:
@@ -159,23 +177,7 @@ class ButtonFolderPop(QPushButton):
         
         self.setText(text)
         self.setFixedSize(size[0], size[1])
-        self.clicked.connect(self.pop)
-
-
-    def pop(self):
-        if os.path.exists(self.pathFolder):
-            listFolder = sorted(os.listdir(self.pathFolder))
-            if len(listFolder) == 0:
-                return None
-            
-            fileName = listFolder[0]
-            pathfile = os.path.join(self.pathFolder, fileName)
-            
-            try:
-                os.remove(pathfile)
-                print(f"Removed: {fileName}")
-            except Exception as e:
-                print(f"Failed to remove {fileName}: {e}")
+        self.clicked.connect(lambda: _pop_from_folder(self.pathFolder))
 
 
 

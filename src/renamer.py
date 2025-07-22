@@ -69,6 +69,36 @@ def gui_bulk_file_index_by_date(pathFolderInput: str, startIndex: int = 1):
 
 
 
+def gui_bulk_cpr_index_by_order(folderPath, index, indexPrecision):
+    listFileNames = [f for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f))]
+    pattern = re.compile(r'^\d+_(\d+)_([\d\-]+)_PRRUN(\d+)(?: (NP))?\.pdf$')
+
+    listFilesRenamed = []
+    for fileName in listFileNames:
+        match = pattern.search(fileName)
+        if match:
+            project = dictProjectNames.get(match.group(1), f"Unknown Project")
+            date = datetime.strptime(match.group(2), "%Y-%m-%d").strftime("%m.%d.%y")
+            prrun = match.group(3)
+            suffixNP = " NP" if match.group(4) else ""
+
+            formattedIndex = f"{index:0{indexPrecision}}"
+            newFileName = f"eCPR {formattedIndex} {project} ending {date} PRRUN{prrun}{suffixNP}.pdf"
+            listFilesRenamed.append((fileName, newFileName))
+            index += 1
+
+    if not listFilesRenamed:
+        print("No files to rename.")
+        return
+    
+    for oldName, newName in listFilesRenamed:
+        oldPath = os.path.join(folderPath, oldName)
+        newPath = os.path.join(folderPath, newName)
+        os.rename(oldPath, newPath)
+    
+    print("Operation complete.\n")
+
+
 def bulk_cpr_index_by_order(folderPath, index, indexPrecision):
 
     listFileNames = [f for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f))]
