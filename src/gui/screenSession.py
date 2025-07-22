@@ -7,24 +7,13 @@ from playwright.sync_api import sync_playwright
 
 import os, json
 import src.gui.widgets as Widgets
+import src.gui.style as Style
 import src.automate as Automate
 
 with open(r".\config.json", "r") as configFile: 
     config = json.load(configFile)
 
-styleLabels = """ QLabel {
-    font-size: 11pt;
-    font-family: 'Segoe UI';
-    font-weight: 400;
-    }
-"""
 
-styleTitle = """ QLabel {
-    font-size: 14pt;
-    font-family: 'Segoe UI';
-    font-weight: 1000;
-    }
-"""
 
 class PanelSetup(QWidget):
     signalProjectSelected = Signal(str)
@@ -34,18 +23,18 @@ class PanelSetup(QWidget):
 
         self.widgetTitle = QLabel("Session Setup")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
-        self.widgetTitle.setStyleSheet(styleTitle)
+        self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
 
         projectTextLabel = "Project"
         projectTextTemp = "Please type or select Project"
         listTextProject = [
             "",
-            "20240559364 - Hawthorne - HARRIS CONSTRUCTION CO INC",
-            "506809 - Sanger Complex III - HARRIS CONSTRUCTION CO INC",
-            "506782 - Sanger Aquatics - HARRIS CONSTRUCTION CO INC",
-            "496589 - Parlier High - BMY Construction Group, Inc.",
-            "496574 - Parlier Jr - BMY Construction Group, Inc.",
-            "493551 - Avenal Tamarack - BMY Construction Group, Inc.",
+            "SLO Hawthorne - HARRIS CONSTRUCTION CO INC",
+            "Sanger Complex III - HARRIS CONSTRUCTION CO INC",
+            "Sanger Aquatics - HARRIS CONSTRUCTION CO INC",
+            "Parlier High - BMY Construction Group, Inc.",
+            "Parlier Jr - BMY Construction Group, Inc.",
+            "Avenal Tamarack - BMY Construction Group, Inc.",
         ]
         self.widgetComboxProject = Widgets.Combox(projectTextLabel, projectTextTemp, listTextProject, (90, 30))
 
@@ -53,17 +42,17 @@ class PanelSetup(QWidget):
         self.pathLog = pathLog
         self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
 
-        self.widgetClear = Widgets.ButtonFolderClear(self.pathFolderList, "Clear Folder", (90, 30))
-        self.widgetOpen = Widgets.ButtonFolderOpen(self.pathFolderList, "Open Folder", (90, 30))
-        self.widgetAddFiles = Widgets.ButtonFolderAddFiles(self.pathFolderList, "Add Files", (90, 30))
+        self.widgetClear = Widgets.ButtonClearFolder(self.pathFolderList, "Clear Folder", (90, 30))
+        self.widgetOpen = Widgets.ButtonOpenFolder(self.pathFolderList, "Open Folder", (90, 30))
+        self.widgetAddFiles = Widgets.ButtonAddFiles(self.pathFolderList, "Add Files", (90, 30))
         
 
         self.widgetEntryName = QLabel("Entry: None")
-        self.widgetEntryName.setStyleSheet(styleLabels)
+        self.widgetEntryName.setStyleSheet(Style.LABEL_DEFAULT)
         self.widgetEntryProject = QLabel("Project: None")
-        self.widgetEntryProject.setStyleSheet(styleLabels)
+        self.widgetEntryProject.setStyleSheet(Style.LABEL_DEFAULT)
         self.widgetEntryPrime = QLabel("Prime: None")
-        self.widgetEntryPrime.setStyleSheet(styleLabels)
+        self.widgetEntryPrime.setStyleSheet(Style.LABEL_DEFAULT)
 
         self.widgetLoad = Widgets.Button(self.load, "Load Session", (110, 30))
         
@@ -112,14 +101,14 @@ class PanelSession(QWidget):
         self.pathLog = pathLogFile
         self.widgetTitle = QLabel("Automation Sessions")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
-        self.widgetTitle.setStyleSheet(styleTitle)
+        self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
 
         self.widgetEntryName = QLabel("Entry: None")
-        self.widgetEntryName.setStyleSheet(styleLabels)
+        self.widgetEntryName.setStyleSheet(Style.LABEL_DEFAULT)
         self.widgetEntryProject = QLabel("Project: None")
-        self.widgetEntryProject.setStyleSheet(styleLabels)
+        self.widgetEntryProject.setStyleSheet(Style.LABEL_DEFAULT)
         self.widgetEntryPrime = QLabel("Prime: None")
-        self.widgetEntryPrime.setStyleSheet(styleLabels)
+        self.widgetEntryPrime.setStyleSheet(Style.LABEL_DEFAULT)
 
         self.widgetRun = Widgets.Button(self.run, "Run Entry")
         self.widgetNext = Widgets.Button(self.next, "Next Entry")

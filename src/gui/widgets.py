@@ -6,71 +6,7 @@ from PySide6.QtCore import Qt, QFileSystemWatcher
 from PySide6.QtGui import QDragMoveEvent, QDragEnterEvent, QDropEvent
 import os
 import shutil
-
-
-
-styleLabels = """ QLabel {
-    font-size: 11pt;
-    font-family: 'Segoe UI';
-    font-weight: 700;
-    }
-"""
-
-styleButtons = """ 
-    QPushButton {
-        font-size: 11pt;
-        font-family: 'Segoe UI';
-        font-weight: 400;
-    }
-"""
-
-styleList = """ 
-    QListWidget {
-        border: 2px dashed #7F9DB9;
-        border-radius: 8px;
-        font-family: 'Segoe UI';
-        font-weight: 200;
-        font-size: 14px;
-        color: #ffffff;
-        padding: 9px;
-    }
-
-    QListWidget::item {
-        background-color: #222222;
-        border: 1px solid #555555;
-    }
-
-    QListWidget QScrollBar:vertical {
-        background: #7F9DB9;
-        width: 8px;
-        margin: 0px;
-    }
-
-"""
-
-styleList2 = """ 
-    QListWidget {
-        border-radius: 8px;
-        font-family: 'Segoe UI';
-        font-weight: 200;
-        font-size: 14px;
-        color: #ffffff;
-        padding: 9px;
-    }
-
-    QListWidget::item {
-        background-color: #222222;
-        border: 1px solid #555555;
-    }
-
-    QListWidget QScrollBar:vertical {
-        background: #7F9DB9;
-        width: 8px;
-        margin: 0px;
-    }
-
-"""
-
+import src.gui.style as Style
 
 
 def _copy_files_to_folder(pathFile: str, pathFolder: str) -> bool:
@@ -107,19 +43,6 @@ def _pop_from_folder(pathFolder: str):
 
 
 
-class Button(QPushButton):
-    def __init__(self, onClicked, label: str=None, size: tuple=None) -> None:
-        super().__init__()
-        
-        if label != None and isinstance(label, str):
-            self.setText(label)
-
-        if size != None and isinstance(label, tuple):
-            self.setFixedSize(size[0], size[1])
-    
-        self.clicked.connect(onClicked)
-
-
 
 class ListDragDrop(QListWidget):
     def __init__(self, pathFolder: str, minHeight: int, minWidth: int) -> None:
@@ -128,7 +51,7 @@ class ListDragDrop(QListWidget):
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
-        self.setStyleSheet(styleList)
+        self.setStyleSheet(Style.LIST_DRAG_DROP)
         self.setMinimumHeight(minHeight)
         self.setMinimumWidth(minWidth)
         
@@ -168,31 +91,38 @@ class ListDragDrop(QListWidget):
 
 
 
-class ButtonFolderPop(QPushButton):
-    def __init__(self, pathFolder: str, text: str, size: tuple=None) -> None:
+class Button(QPushButton):
+    def __init__(self, onClicked=None, label: str=None, size: tuple=None) -> None:
         super().__init__()
-
-        self.pathFolder = pathFolder
-        os.makedirs(self.pathFolder, exist_ok=True)
+        self.setStyleSheet(Style.BUTTON_DEFAULT)
         
-        self.setText(text)
-        self.setFixedSize(size[0], size[1])
-        self.clicked.connect(lambda: _pop_from_folder(self.pathFolder))
+        if label != None and isinstance(label, str):
+            self.setText(label)
+
+        if size != None and isinstance(label, tuple):
+            self.setFixedSize(size[0], size[1])
+    
+        if onClicked:
+            self.clicked.connect(onClicked)
 
 
 
-
-class ButtonFolderOpen(QPushButton):
-    def __init__(self, pathFolder: str, text: str, size: tuple=None) -> None:
-        super().__init__()
-
-        self.pathFolder = pathFolder
+class ButtonPopFolder(Button):
+    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
+        self.pathFolder = _pathFolder
         os.makedirs(self.pathFolder, exist_ok=True)
-        
-        self.setText(text)
-        self.setFixedSize(size[0], size[1])
-        self.clicked.connect(self.open)
 
+        super().__init__(onClicked=lambda: _pop_from_folder(self.pathFolder), label=_label, size=_size)
+
+
+
+
+class ButtonOpenFolder(Button):
+    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
+        self.pathFolder = _pathFolder
+        os.makedirs(self.pathFolder, exist_ok=True)
+
+        super().__init__(onClicked=self.open, label=_label, size=_size)
 
     def open(self):
         if os.path.exists(self.pathFolder):
@@ -200,17 +130,12 @@ class ButtonFolderOpen(QPushButton):
 
 
 
-class ButtonFolderClear(QPushButton):
-    def __init__(self, pathFolder: str, text: str, size: tuple=None) -> None:
-        super().__init__()
-
-        self.pathFolder = pathFolder
+class ButtonClearFolder(Button):
+    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
+        self.pathFolder = _pathFolder
         os.makedirs(self.pathFolder, exist_ok=True)
-        
-        self.setText(text)
-        self.setFixedSize(size[0], size[1])
-        self.clicked.connect(self.clear)
 
+        super().__init__(onClicked=self.clear, label=_label, size=_size)
 
     def clear(self):
         if os.path.exists(self.pathFolder):
@@ -225,19 +150,12 @@ class ButtonFolderClear(QPushButton):
 
 
 
-
-
-class ButtonFolderAddFiles(QPushButton):
-    def __init__(self, pathFolder: str, text: str, size: tuple=None) -> None:
-        super().__init__()
-
-        self.pathFolder = pathFolder
+class ButtonAddFiles(Button):
+    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
+        self.pathFolder = _pathFolder
         os.makedirs(self.pathFolder, exist_ok=True)
-        
-        self.setText(text)
-        self.setFixedSize(size[0], size[1])
-        self.clicked.connect(self.add_files)
 
+        super().__init__(onClicked=self.add_files, label=_label, size=_size)
 
     def add_files(self):
         files, _ = QFileDialog.getOpenFileNames(self, "Select Files To Add")
@@ -252,11 +170,12 @@ class Combox(QWidget):
         super().__init__()
 
         self.label = QLabel(label)
-        self.label.setStyleSheet(styleLabels)
+        self.label.setStyleSheet(Style.LABEL_HEADING)
         if sizeLabel != None:
             self.label.setFixedSize(sizeLabel[0], sizeLabel[1])
 
         self.combox = QComboBox()
+        self.combox.setStyleSheet(Style.COMBOX_DEFAULT)
         self.combox.setEditable(True)
         self.combox.addItems(data)
         self.combox.lineEdit().setPlaceholderText(placeholder)
@@ -278,11 +197,12 @@ class InputFieldLine(QWidget):
         super().__init__()
 
         self.input = QLineEdit()
+        self.input.setStyleSheet(Style.INPUT_DEFAULT)
         if sizeField != None:
             self.input.setFixedSize(sizeField[0], sizeField[1])
 
         self.label = QLabel(label)
-        self.label.setStyleSheet(styleLabels)
+        self.label.setStyleSheet(Style.LABEL_HEADING)
         if sizeLabel != None:
             self.label.setFixedSize(sizeLabel[0], sizeLabel[1])
 

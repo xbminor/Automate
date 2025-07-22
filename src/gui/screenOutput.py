@@ -6,21 +6,8 @@ from PySide6.QtCore import Qt
 
 import os
 import src.gui.widgets as Widgets
+import src.gui.style as Style
 from src.renamer import gui_bulk_cpr_index_by_order
-
-styleLabels = """ QLabel {
-    font-size: 11pt;
-    font-family: 'Segoe UI';
-    font-weight: 400;
-    }
-"""
-
-styleTitle = """ QLabel {
-    font-size: 14pt;
-    font-family: 'Segoe UI';
-    font-weight: 1000;W
-    }
-"""
 
 
 
@@ -30,7 +17,7 @@ class PanelRenamer(QWidget):
 
         self.widgetTitle = QLabel("eCPR Renamer")
         self.widgetTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.widgetTitle.setStyleSheet(styleTitle)
+        self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
         
         self.widgetInputField = Widgets.InputFieldLine("Starting index", (30,30), (120, 30))
 
@@ -38,13 +25,11 @@ class PanelRenamer(QWidget):
         self.pathLog = pathLogFile
         self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
 
-        self.widgetClear = Widgets.ButtonFolderClear(self.pathFolderList, "Clear Folder", (90, 30))
-        self.widgetOpen = Widgets.ButtonFolderOpen(self.pathFolderList, "Open Folder", (90, 30))
-        self.widgetAddFiles = Widgets.ButtonFolderAddFiles(self.pathFolderList, "Add Files", (90, 30))
+        self.widgetClear = Widgets.ButtonClearFolder(self.pathFolderList, "Clear Folder", (90, 30))
+        self.widgetOpen = Widgets.ButtonOpenFolder(self.pathFolderList, "Open Folder", (90, 30))
+        self.widgetAddFiles = Widgets.ButtonAddFiles(self.pathFolderList, "Add Files", (90, 30))
 
         self.widgetRun = Widgets.Button(self.renamer, "Run Renamer", (110, 30))
-     
-
 
         layout = QVBoxLayout()
         layout.addWidget(self.widgetTitle)

@@ -6,23 +6,11 @@ from PySide6.QtCore import Qt
 
 import os, shutil
 import src.gui.widgets as Widgets
+import src.gui.style as Style
 from src.parser import gui_parse_cpr_xlsx_bulk
 from src.renamer import gui_bulk_file_index_by_date
 
 
-styleLabels = """ QLabel {
-    font-size: 11pt;
-    font-family: 'Segoe UI';
-    font-weight: 400;
-    }
-"""
-
-styleTitle = """ QLabel {
-    font-size: 14pt;
-    font-family: 'Segoe UI';
-    font-weight: 1000;
-    }
-"""
 
 
 class PanelIndexer(QWidget):
@@ -31,7 +19,7 @@ class PanelIndexer(QWidget):
 
         self.widgetTitle = QLabel("File Indexer")
         self.widgetTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.widgetTitle.setStyleSheet(styleTitle)
+        self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
         
         self.widgetInputField = Widgets.InputFieldLine("Starting index", (30,30), (120, 30))
         self.widgetInputField.input.setText(str(1))
@@ -41,9 +29,9 @@ class PanelIndexer(QWidget):
         self.pathLog = pathLog
         self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
 
-        self.widgetClear = Widgets.ButtonFolderClear(self.pathFolderList, "Clear Folder", (90, 30))
-        self.widgetOpen = Widgets.ButtonFolderOpen(self.pathFolderList, "Open Folder", (90, 30))
-        self.widgetAddFiles = Widgets.ButtonFolderAddFiles(self.pathFolderList, "Add Files", (90, 30))
+        self.widgetClear = Widgets.ButtonClearFolder(self.pathFolderList, "Clear Folder", (90, 30))
+        self.widgetOpen = Widgets.ButtonOpenFolder(self.pathFolderList, "Open Folder", (90, 30))
+        self.widgetAddFiles = Widgets.ButtonAddFiles(self.pathFolderList, "Add Files", (90, 30))
 
         self.widgetRun = Widgets.Button(self.indexer, "Run Indexer", (110, 30))
         self.widgetMove = Widgets.Button(self.move, "Move Files Next", (110, 30))
@@ -108,17 +96,17 @@ class PanelParser(QWidget):
 
         self.widgetTitle = QLabel("Excel Parser")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
-        self.widgetTitle.setStyleSheet(styleTitle)
+        self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
 
         self.pathFolderList = pathFolderList
         self.pathFolderNext = pathFolderNext
         self.pathLog = pathLog
         self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
 
-        self.widgetClear = Widgets.ButtonFolderClear(self.pathFolderList, "Clear Folder", (90, 30))
-        self.widgetPop = Widgets.ButtonFolderPop(self.pathFolderList, "Delete First", (90, 30))
-        self.widgetOpen = Widgets.ButtonFolderOpen(self.pathFolderList, "Open Folder", (90, 30))
-        self.widgetAddFiles = Widgets.ButtonFolderAddFiles(self.pathFolderList, "Add Files", (90, 30))
+        self.widgetClear = Widgets.ButtonClearFolder(self.pathFolderList, "Clear Folder", (90, 30))
+        self.widgetPop = Widgets.ButtonPopFolder(self.pathFolderList, "Delete First", (90, 30))
+        self.widgetOpen = Widgets.ButtonOpenFolder(self.pathFolderList, "Open Folder", (90, 30))
+        self.widgetAddFiles = Widgets.ButtonAddFiles(self.pathFolderList, "Add Files", (90, 30))
 
         self.widgetRun = Widgets.Button(self.parser, "Run Parser", (110, 30))
         
