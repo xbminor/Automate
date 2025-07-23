@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QLabel,
+    QWidget, QLabel, QFrame,
     QVBoxLayout, QHBoxLayout,
 )
 from PySide6.QtCore import Qt
@@ -11,9 +11,11 @@ from src.renamer import gui_bulk_cpr_index_by_order
 
 
 
-class PanelRenamer(QWidget):
+class PanelRenamer(QFrame):
     def __init__(self, pathFolderList: str, pathLogFile: str):
         super().__init__()
+        self.setObjectName("Panel")
+        self.setStyleSheet(Style.FRAME_PANEL)
 
         self.widgetTitle = QLabel("eCPR Renamer")
         self.widgetTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)

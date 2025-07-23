@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QLabel,
+    QLabel, QFrame,
     QVBoxLayout, QHBoxLayout,
 )
 from PySide6.QtCore import Qt
@@ -11,11 +11,14 @@ from src.parser import gui_parse_cpr_xlsx_bulk
 from src.renamer import gui_bulk_file_index_by_date
 
 
+from PySide6.QtGui import QPalette, QColor
 
-
-class PanelIndexer(QWidget):
+class PanelIndexer(QFrame):
     def __init__(self, pathFolderList: str, pathFolderNext: str, pathLog: str):
         super().__init__()
+
+        self.setObjectName("Panel")
+        self.setStyleSheet(Style.FRAME_PANEL)
 
         self.widgetTitle = QLabel("File Indexer")
         self.widgetTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -90,9 +93,12 @@ class PanelIndexer(QWidget):
 
 
 
-class PanelParser(QWidget):
+class PanelParser(QFrame):
     def __init__(self, pathFolderList: str, pathFolderNext: str, pathLog: str):
         super().__init__()
+
+        self.setObjectName("Panel")
+        self.setStyleSheet(Style.FRAME_PANEL)
 
         self.widgetTitle = QLabel("Excel Parser")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
@@ -146,7 +152,7 @@ class PanelParser(QWidget):
 
 
 
-class ScreenInput(QWidget):
+class ScreenInput(QFrame):
     def __init__(self, _pathIndexer, _pathParser, _pathSession, _pathLogFile):
         super().__init__()
         self.pathIndexerFolder = _pathIndexer

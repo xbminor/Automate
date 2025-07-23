@@ -2,8 +2,9 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QFrame, QVBoxLayout
 
+import src.gui.style as Style
 from src.gui.screenInput import ScreenInput
 from src.gui.screenSession import ScreenSession
 from src.gui.screenOutput import ScreenOutput
@@ -34,11 +35,23 @@ class MainWindow(QMainWindow):
         with open(pathLogFile, "w", encoding="utf-8") as log:
             log.write(f"### ******************* Log - {timeStamp} ******************* ###\n\n")
 
-        tabs = QTabWidget()
+        frameTabs = QFrame()
+        frameTabs.setObjectName("TabWrapper")
+        frameTabs.setStyleSheet(Style.FRAME_TABS)
+
+        tabs = QTabWidget(frameTabs)
+        tabs.setStyleSheet(Style.TABS_DEFAULT)
+
         tabs.addTab(ScreenInput(pathIndexer, pathParser, pathSession, pathLogFile), "Input")
         tabs.addTab(ScreenSession(pathSession, pathRenamer, pathLogFile), "Session")
         tabs.addTab(ScreenOutput(pathRenamer, pathLogFile), "Output")
-        self.setCentralWidget(tabs)
+
+        layoutTabs = QVBoxLayout()
+        layoutTabs.setContentsMargins(0, 0, 0, 0)
+        layoutTabs.addWidget(tabs)
+        frameTabs.setLayout(layoutTabs)
+
+        self.setCentralWidget(frameTabs)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

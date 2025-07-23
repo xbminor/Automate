@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QListWidget, QPushButton, QWidget, QComboBox, QLabel,
+    QListWidget, QPushButton, QComboBox, QLabel, QFrame,
     QFileDialog, QLineEdit, QHBoxLayout
 )
 from PySide6.QtCore import Qt, QFileSystemWatcher
@@ -165,9 +165,12 @@ class ButtonAddFiles(Button):
 
 
 
-class Combox(QWidget):
+class Combox(QFrame):
     def __init__(self, label: str, placeholder: str, data: list, sizeLabel: tuple=None, sizeCombox: tuple=None) -> None:
         super().__init__()
+
+        self.setObjectName("Combox")
+        self.setStyleSheet(Style.FRAME_COMBOX)
 
         self.label = QLabel(label)
         self.label.setStyleSheet(Style.LABEL_HEADING)
@@ -192,9 +195,11 @@ class Combox(QWidget):
 
 
 
-class InputFieldLine(QWidget):
+class InputFieldLine(QFrame):
     def __init__(self, label: str, sizeField: tuple=None, sizeLabel: tuple=None) -> None:
         super().__init__()
+        self.setObjectName("InputField")
+        self.setStyleSheet(Style.FRAME_INPUT)
 
         self.input = QLineEdit()
         self.input.setStyleSheet(Style.INPUT_DEFAULT)
@@ -211,7 +216,3 @@ class InputFieldLine(QWidget):
         layout.addWidget(self.input)
 
         self.setLayout(layout)
-        
-
-
-                

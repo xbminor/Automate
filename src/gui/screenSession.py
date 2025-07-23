@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
-    QWidget, QLabel,
+    QWidget, QLabel, QFrame,
     QVBoxLayout, QHBoxLayout,
 )
-from PySide6.QtCore import Qt, Signal, QObject
+from PySide6.QtCore import Qt, Signal
 from playwright.sync_api import sync_playwright
 
 import os, json
@@ -15,11 +15,13 @@ with open(r".\config.json", "r") as configFile:
 
 
 
-class PanelSetup(QWidget):
+class PanelSetup(QFrame):
     signalProjectSelected = Signal(str)
 
     def __init__(self, pathFolderList: str, pathLog: str):
         super().__init__()
+        self.setObjectName("Panel")
+        self.setStyleSheet(Style.FRAME_PANEL)
 
         self.widgetTitle = QLabel("Session Setup")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
@@ -93,9 +95,11 @@ class PanelSetup(QWidget):
 
 
 
-class PanelSession(QWidget):
+class PanelSession(QFrame):
     def __init__(self, pathFolderList: str, pathLogFile: str):
         super().__init__()
+        self.setObjectName("Panel")
+        self.setStyleSheet(Style.FRAME_PANEL)
 
         self.pathFolderList = pathFolderList
         self.pathLog = pathLogFile
