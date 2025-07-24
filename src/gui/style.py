@@ -80,7 +80,6 @@ QListWidget::item {{
 QListWidget QScrollBar:vertical {{
     background-color: {COLOR_WIDGET_BG};
     width: 15px;
-
 }}
 
 QListWidget QScrollBar::handle:vertical {{

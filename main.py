@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
         pathParser = pathRoot / "data" / "parser"
         pathSession = pathRoot / "data" / "session"
         pathRenamer = pathRoot / "data" / "renamer"
+        pathCopier = pathRoot / "data" / "copier"
         pathLog = pathRoot / "log"
         timeStamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -44,7 +45,7 @@ class MainWindow(QMainWindow):
 
         tabs.addTab(ScreenInput(pathIndexer, pathParser, pathSession, pathLogFile), "Input")
         tabs.addTab(ScreenSession(pathSession, pathRenamer, pathLogFile), "Session")
-        tabs.addTab(ScreenOutput(pathRenamer, pathLogFile), "Output")
+        tabs.addTab(ScreenOutput(pathRenamer, pathCopier, pathLogFile), "Output")
 
         layoutTabs = QVBoxLayout()
         layoutTabs.setContentsMargins(0, 0, 0, 0)
