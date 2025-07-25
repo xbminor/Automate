@@ -4,167 +4,190 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-import os, shutil
+import os
 import src.gui.widgets as Widgets
 import src.gui.style as Style
-from src.parser import gui_parse_cpr_xlsx_bulk
-from src.renamer import gui_bulk_file_index_by_date
+from src.parser import gui_parser
+from src.renamer import gui_indexer
 
-
-from PySide6.QtGui import QPalette, QColor
 
 class PanelIndexer(QFrame):
-    def __init__(self, pathFolderList: str, pathFolderNext: str, pathLog: str):
+    def __init__(self, _pathInputFolder: str, _pathOutputFolder: str, _pathMoveToFolder: str, _pathLogFile: str):
         super().__init__()
-
         self.setObjectName("Panel")
         self.setStyleSheet(Style.FRAME_PANEL)
+
+        self.pathInputFolder = _pathInputFolder
+        self.pathOutputFolder = _pathOutputFolder
+        self.pathMoveToFolder = _pathMoveToFolder
+        self.pathLogFile = _pathLogFile
 
         self.widgetTitle = QLabel("File Indexer")
         self.widgetTitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
+
+        self.widgetInputList = Widgets.ListDragDrop(self.pathInputFolder, (240,240))
+        self.widgetInputBtnClear = Widgets.Button(self.widgetInputList.clear_folder, "Clear Folder", (90,30))
+        self.widgetInputBtnOpen = Widgets.Button(self.widgetInputList.open_folder, "Open Folder", (90,30))
+        self.widgetInputBtnAddFiles = Widgets.Button(self.widgetInputList.add_files, "Add Files", (90,30))
         
-        self.widgetInputField = Widgets.InputFieldLine("Starting index", (30,30), (120, 30))
+        self.widgetInputField = Widgets.InputFieldLine("Starting index", (30,30), (120,30))
         self.widgetInputField.input.setText(str(1))
+        self.widgetInputRun = Widgets.Button(self.indexer, "Run Indexer", (110,30))
 
-        self.pathFolderList = pathFolderList
-        self.pathFolderNext = pathFolderNext
-        self.pathLog = pathLog
-        self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
-
-        self.widgetClear = Widgets.ButtonClearFolder(self.pathFolderList, "Clear Folder", (90, 30))
-        self.widgetOpen = Widgets.ButtonOpenFolder(self.pathFolderList, "Open Folder", (90, 30))
-        self.widgetAddFiles = Widgets.ButtonAddFiles(self.pathFolderList, "Add Files", (90, 30))
-
-        self.widgetRun = Widgets.Button(self.indexer, "Run Indexer", (110, 30))
-        self.widgetMove = Widgets.Button(self.move, "Move Files Next", (110, 30))
+        self.widgetOutputList = Widgets.ListDragDrop(self.pathOutputFolder, (240,240))
+        self.widgetOutputBtnClear = Widgets.Button(self.widgetOutputList.clear_folder, "Clear Folder", (90,30))
+        self.widgetOutputBtnOpen = Widgets.Button(self.widgetOutputList.open_folder, "Open Folder", (90,30))
+        self.widgetOutputBtnMove = Widgets.Button(lambda: self.widgetOutputList.move_to_folder(self.pathMoveToFolder), "Move To Parser", (110,30))
      
+        self.setup_ui()
 
 
+    def setup_ui(self):
         layout = QVBoxLayout()
         layout.addWidget(self.widgetTitle)
 
         layoutFrame = QHBoxLayout()
 
-        layoutList = QVBoxLayout()
-        layoutList.addWidget(self.widgetListFiles)
-        
-        layoutListButtons = QHBoxLayout()
-        layoutListButtons.addWidget(self.widgetClear, alignment=Qt.AlignLeft)
-        layoutListButtons.addStretch()
-        layoutListButtons.addWidget(self.widgetOpen)
-        layoutListButtons.addWidget(self.widgetAddFiles, alignment=Qt.AlignRight)
-        layoutList.addLayout(layoutListButtons)
-        layoutFrame.addLayout(layoutList)
+        layoutFrameInputList = QVBoxLayout()
+        layoutFrameInputList.addWidget(self.widgetInputList)
+        layoutFrameInputListButtons = QHBoxLayout()
+        layoutFrameInputListButtons.addWidget(self.widgetInputBtnClear, alignment=Qt.AlignLeft)
+        layoutFrameInputListButtons.addStretch()
+        layoutFrameInputListButtons.addWidget(self.widgetInputBtnOpen)
+        layoutFrameInputListButtons.addWidget(self.widgetInputBtnAddFiles, alignment=Qt.AlignRight)
+        layoutFrameInputList.addLayout(layoutFrameInputListButtons)
+        layoutFrame.addLayout(layoutFrameInputList)
 
-        layoutConfig = QVBoxLayout()
-        layoutConfig.addStretch()
-        layoutConfig.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layoutConfig.addWidget(self.widgetInputField, alignment=Qt.AlignmentFlag.AlignHCenter)
-        layoutConfig.addWidget(self.widgetRun, alignment=Qt.AlignmentFlag.AlignHCenter)
-        layoutConfig.addStretch()
-        layoutConfig.addWidget(self.widgetMove, alignment=Qt.AlignmentFlag.AlignHCenter)
-        layoutFrame.addLayout(layoutConfig)
+        layoutFrameInputConfig = QVBoxLayout()
+        layoutFrameInputConfig.addStretch()
+        layoutFrameInputConfig.addWidget(self.widgetInputField, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layoutFrameInputConfig.addWidget(self.widgetInputRun, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layoutFrameInputConfig.addStretch()
+        layoutFrame.addLayout(layoutFrameInputConfig)
+
+        layoutFrameOutputList = QVBoxLayout()
+        layoutFrameOutputList.addWidget(self.widgetOutputList)
+        layoutFrameOutputListButtons = QHBoxLayout()
+        layoutFrameOutputListButtons.addWidget(self.widgetOutputBtnClear, alignment=Qt.AlignLeft)
+        layoutFrameOutputListButtons.addStretch()
+        layoutFrameOutputListButtons.addWidget(self.widgetOutputBtnOpen)
+        layoutFrameOutputListButtons.addWidget(self.widgetOutputBtnMove, alignment=Qt.AlignRight)
+        layoutFrameOutputList.addLayout(layoutFrameOutputListButtons)
+        layoutFrame.addLayout(layoutFrameOutputList)
 
         layout.addLayout(layoutFrame)
-
         self.setLayout(layout)
 
 
     def indexer(self):
-        if os.path.exists(self.pathFolderList):
-            text = self.widgetInputField.input.text().strip()
-            if not text.isdigit():
-                return None
-            gui_bulk_file_index_by_date(self.pathFolderList, int(text))
-
-    def move(self):
-        if not os.path.exists(self.pathFolderList):
+        if not os.path.exists(self.pathInputFolder) or not os.path.exists(self.pathOutputFolder):
             return None
         
-        for fileName in os.listdir(self.pathFolderList):
-            pathSrc = os.path.join(self.pathFolderList, fileName)
-            pathDst = os.path.join(self.pathFolderNext, fileName)
-            if os.path.isfile(pathSrc):
-                try:
-                    shutil.move(pathSrc, pathDst)
-                except Exception as e:
-                    print(f"Failed to move {fileName}: {e}")
+        indexStart = self.widgetInputField.input.text().strip()
+        indexPrecision = "2"
+        if not indexStart.isdigit() or not indexPrecision.isdigit():
+            return None
+        
+        gui_indexer(self.pathInputFolder, self.pathOutputFolder, int(indexStart), int(indexPrecision))
 
 
 
 class PanelParser(QFrame):
-    def __init__(self, pathFolderList: str, pathFolderNext: str, pathLog: str):
+    def __init__(self, _pathInputFolder: str, _pathOutputFolder: str, _pathMoveToFolder: str, _pathLogFile: str):
         super().__init__()
-
         self.setObjectName("Panel")
         self.setStyleSheet(Style.FRAME_PANEL)
+
+        self.pathInputFolder = _pathInputFolder
+        self.pathOutputFolder = _pathOutputFolder
+        self.pathMoveToExcelFolder = _pathMoveToFolder / "excel"
+        self.pathMoveToJsonFolder = _pathMoveToFolder / "json"
+        self.pathLogFile = _pathLogFile
 
         self.widgetTitle = QLabel("Excel Parser")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
         self.widgetTitle.setStyleSheet(Style.LABEL_TITLE)
 
-        self.pathFolderList = pathFolderList
-        self.pathFolderNext = pathFolderNext
-        self.pathLog = pathLog
-        self.widgetListFiles = Widgets.ListDragDrop(self.pathFolderList, 240, 240)
-
-        self.widgetClear = Widgets.ButtonClearFolder(self.pathFolderList, "Clear Folder", (90, 30))
-        self.widgetPop = Widgets.ButtonPopFolder(self.pathFolderList, "Delete First", (90, 30))
-        self.widgetOpen = Widgets.ButtonOpenFolder(self.pathFolderList, "Open Folder", (90, 30))
-        self.widgetAddFiles = Widgets.ButtonAddFiles(self.pathFolderList, "Add Files", (90, 30))
-
-        self.widgetRun = Widgets.Button(self.parser, "Run Parser", (110, 30))
+        self.widgetInputList = Widgets.ListDragDrop(self.pathInputFolder, (240,240))
+        self.widgetInputBtnClear = Widgets.Button(self.widgetInputList.clear_folder, "Clear Folder", (90,30))
+        self.widgetInputBtnOpen = Widgets.Button(self.widgetInputList.open_folder, "Open Folder", (90,30))
+        self.widgetInputBtnAddFiles = Widgets.Button(self.widgetInputList.add_files, "Add Files", (90,30))
         
+        self.widgetInputRun = Widgets.Button(self.parser, "Run Parser", (110,30))
 
-        layout = QVBoxLayout() 
+        self.widgetOutputList = Widgets.ListDragDrop(self.pathOutputFolder, (240,240))
+        self.widgetOutputBtnClear = Widgets.Button(self.widgetOutputList.clear_folder, "Clear Folder", (90,30))
+        self.widgetOutputBtnOpen = Widgets.Button(self.widgetOutputList.open_folder, "Open Folder", (90,30))
+        self.widgetOutputBtnMove = Widgets.Button(self.move_input_output, "Move To Session", (110,30))
+        
+        self.setup_ui()
+
+
+    def setup_ui(self):
+        layout = QVBoxLayout()
         layout.addWidget(self.widgetTitle)
 
         layoutFrame = QHBoxLayout()
 
-        layoutList = QVBoxLayout()
-        layoutList.addWidget(self.widgetListFiles)
-        
-        layoutListButtons = QHBoxLayout()
-        layoutListButtons.addWidget(self.widgetClear, alignment=Qt.AlignLeft)
-        layoutListButtons.addWidget(self.widgetPop)
-        layoutListButtons.addStretch()
-        layoutListButtons.addWidget(self.widgetOpen)
-        layoutListButtons.addWidget(self.widgetAddFiles, alignment=Qt.AlignRight)
-        layoutList.addLayout(layoutListButtons)
-        layoutFrame.addLayout(layoutList)
+        layoutFrameInputList = QVBoxLayout()
+        layoutFrameInputList.addWidget(self.widgetInputList)
+        layoutFrameInputListButtons = QHBoxLayout()
+        layoutFrameInputListButtons.addWidget(self.widgetInputBtnClear, alignment=Qt.AlignLeft)
+        layoutFrameInputListButtons.addStretch()
+        layoutFrameInputListButtons.addWidget(self.widgetInputBtnOpen)
+        layoutFrameInputListButtons.addWidget(self.widgetInputBtnAddFiles, alignment=Qt.AlignRight)
+        layoutFrameInputList.addLayout(layoutFrameInputListButtons)
+        layoutFrame.addLayout(layoutFrameInputList)
 
-        layoutConfig = QVBoxLayout()
-        layoutConfig.addStretch()
-        layoutConfig.addWidget(self.widgetRun, alignment=Qt.AlignmentFlag.AlignHCenter)
-        layoutConfig.addStretch()
-        layoutFrame.addLayout(layoutConfig)
+        layoutFrameInputConfig = QVBoxLayout()
+        layoutFrameInputConfig.addStretch()
+        layoutFrameInputConfig.addWidget(self.widgetInputRun, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layoutFrameInputConfig.addStretch()
+        layoutFrame.addLayout(layoutFrameInputConfig)
+
+        layoutFrameOutputList = QVBoxLayout()
+        layoutFrameOutputList.addWidget(self.widgetOutputList)
+        layoutFrameOutputListButtons = QHBoxLayout()
+        layoutFrameOutputListButtons.addWidget(self.widgetOutputBtnClear, alignment=Qt.AlignLeft)
+        layoutFrameOutputListButtons.addStretch()
+        layoutFrameOutputListButtons.addWidget(self.widgetOutputBtnOpen)
+        layoutFrameOutputListButtons.addWidget(self.widgetOutputBtnMove, alignment=Qt.AlignRight)
+        layoutFrameOutputList.addLayout(layoutFrameOutputListButtons)
+        layoutFrame.addLayout(layoutFrameOutputList)
+
         layout.addLayout(layoutFrame)
-
         self.setLayout(layout)
 
+
     def parser(self):
-        xlsxList = [file for file in os.listdir(self.pathFolderList) if file.endswith(".xlsx") or file.endswith(".xlsm")]
-        gui_parse_cpr_xlsx_bulk(xlsxList, self.pathFolderList, self.pathFolderNext, self.pathLog)
+        xlsxList = [file for file in os.listdir(self.pathInputFolder) if file.endswith(".xlsx") or file.endswith(".xlsm")]
+        gui_parser(xlsxList, self.pathInputFolder, self.pathOutputFolder, self.pathLogFile)
 
 
+    def move_input_output(self):
+        self.widgetInputList.move_to_folder(self.pathMoveToExcelFolder)
+        self.widgetOutputList.move_to_folder(self.pathMoveToJsonFolder)
 
 
 
 
 class ScreenInput(QFrame):
-    def __init__(self, _pathIndexer, _pathParser, _pathSession, _pathLogFile):
+    def __init__(self, _pathIndexer: str, _pathParser, _pathSession, _pathLogFile):
         super().__init__()
-        self.pathIndexerFolder = _pathIndexer
-        self.pathParserFolder = _pathParser
+        self.pathIndexerInputFolder = _pathIndexer / "input"
+        self.pathIndexerOutputFolder = _pathIndexer / "output"
+        self.pathParserInputFolder = _pathParser / "input"
+        self.pathParserOutputFolder = _pathParser / "output"
         self.pathSessionFolder = _pathSession
         self.pathLogFile = _pathLogFile
-        self.setupUI()
+
+        self.setup_ui()
 
 
-    def setupUI(self):
-        widgetPanelIndexer = PanelIndexer(self.pathIndexerFolder, self.pathParserFolder, self.pathLogFile)
-        widgetPanelParser = PanelParser(self.pathParserFolder, self.pathSessionFolder, self.pathLogFile)
+    def setup_ui(self):
+        widgetPanelIndexer = PanelIndexer(self.pathIndexerInputFolder, self.pathIndexerOutputFolder, self.pathParserInputFolder, self.pathLogFile)
+        widgetPanelParser = PanelParser(self.pathParserInputFolder, self.pathParserOutputFolder, self.pathSessionFolder, self.pathLogFile)
 
         layout = QVBoxLayout()
         layout.addWidget(widgetPanelIndexer)

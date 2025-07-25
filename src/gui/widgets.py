@@ -43,25 +43,51 @@ def _pop_from_folder(pathFolder: str):
         print(f"Failed to remove {fileName}: {e}")        
         return False
 
+def _move_file_to_folder(_pathFile: str, _pathMoveToFolder: str):
+    try:
+        if not os.path.exists(_pathMoveToFolder):
+            raise NotADirectoryError(f"{_pathMoveToFolder} is not valid folder.")
+    
+        if not os.path.isfile(_pathFile):
+            raise FileNotFoundError(f"{_pathFile} is not valid file.")
+    
+        fileName = os.path.basename(_pathFile)
+        pathDst = os.path.join(_pathMoveToFolder, fileName)
+
+        shutil.move(_pathFile, pathDst)
+        return True
+    except Exception as e:
+        print(f"Failed to move {fileName}: {e}")
+        return False
+    
+def _clear_folder(pathFolder):
+    if os.path.exists(pathFolder):
+        for fileName in os.listdir(pathFolder):
+            filePath = os.path.join(pathFolder, fileName)
+            if os.path.isfile(filePath):
+                try:
+                    os.remove(filePath)
+                except Exception as e:
+                    print(f"Failed to delete {filePath}: {e}")
+                
 
 
 
 class ListDragDrop(QListWidget):
-    def __init__(self, pathFolder: str, minHeight: int, minWidth: int) -> None:
+    def __init__(self, _pathFolder: str, _size: tuple=(240,240)) -> None:
         super().__init__()
 
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setStyleSheet(Style.LIST_DRAG_DROP)
-        self.setMinimumHeight(minHeight)
-        self.setMinimumWidth(minWidth)
+        self.setMinimumSize(*_size)
         
-        self.pathFolder = str(pathFolder)
+        self.pathFolder = _pathFolder
         os.makedirs(self.pathFolder, exist_ok=True)
         
         self.watcherFolder = QFileSystemWatcher()
-        self.watcherFolder.addPath(self.pathFolder)
+        self.watcherFolder.addPath(str(self.pathFolder))
         self.watcherFolder.directoryChanged.connect(self.refresh_list)
         self.refresh_list()
 
@@ -91,6 +117,39 @@ class ListDragDrop(QListWidget):
                 if os.path.isfile(fullPath):
                     self.addItem(fileName)
 
+    def add_files(self):
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Files To Add")
+        if files:
+            for pathFile in files:
+                _copy_file_to_folder(pathFile, self.pathFolder)
+
+    def open_folder(self):
+        if os.path.exists(self.pathFolder):
+            os.startfile(self.pathFolder)
+
+    def clear_folder(self):
+        if os.path.exists(self.pathFolder):
+            for fileName in os.listdir(self.pathFolder):
+                filePath = os.path.join(self.pathFolder, fileName)
+                if os.path.isfile(filePath):
+                    try:
+                        os.remove(filePath)
+                    except Exception as e:
+                        print(f"Failed to delete {filePath}: {e}")
+
+    def move_to_folder(self, _pathMoveToFolder: str):
+        if not os.path.exists(_pathMoveToFolder):
+            return None
+        
+        for fileName in os.listdir(self.pathFolder):
+            pathSrc = os.path.join(self.pathFolder, fileName)
+            pathDst = os.path.join(_pathMoveToFolder, fileName)
+            if os.path.isfile(pathSrc):
+                try:
+                    shutil.move(pathSrc, pathDst)
+                except Exception as e:
+                    print(f"Failed to move {fileName}: {e}")
+
 
 
 class Button(QPushButton):
@@ -108,62 +167,6 @@ class Button(QPushButton):
             self.clicked.connect(onClicked)
 
 
-
-class ButtonPopFolder(Button):
-    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
-        self.pathFolder = _pathFolder
-        os.makedirs(self.pathFolder, exist_ok=True)
-
-        super().__init__(onClicked=lambda: _pop_from_folder(self.pathFolder), label=_label, size=_size)
-
-
-
-
-class ButtonOpenFolder(Button):
-    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
-        self.pathFolder = _pathFolder
-        os.makedirs(self.pathFolder, exist_ok=True)
-
-        super().__init__(onClicked=self.open, label=_label, size=_size)
-
-    def open(self):
-        if os.path.exists(self.pathFolder):
-            os.startfile(self.pathFolder)
-
-
-
-class ButtonClearFolder(Button):
-    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
-        self.pathFolder = _pathFolder
-        os.makedirs(self.pathFolder, exist_ok=True)
-
-        super().__init__(onClicked=self.clear, label=_label, size=_size)
-
-    def clear(self):
-        if os.path.exists(self.pathFolder):
-            for fileName in os.listdir(self.pathFolder):
-                filePath = os.path.join(self.pathFolder, fileName)
-                if os.path.isfile(filePath):
-                    try:
-                        os.remove(filePath)
-                    except Exception as e:
-                        print(f"Failed to delete {filePath}: {e}")
-
-
-
-
-class ButtonAddFiles(Button):
-    def __init__(self, _pathFolder: str, _label: str, _size: tuple=None) -> None:
-        self.pathFolder = _pathFolder
-        os.makedirs(self.pathFolder, exist_ok=True)
-
-        super().__init__(onClicked=self.add_files, label=_label, size=_size)
-
-    def add_files(self):
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Files To Add")
-        if files:
-            for pathFile in files:
-                _copy_file_to_folder(pathFile, self.pathFolder)
 
 
 class SingleFileDrop(QWidget):
@@ -211,6 +214,13 @@ class SingleFileDrop(QWidget):
         if os.path.isfile(filePath):
             self.pathFile = filePath
             self.refresh()
+
+    def set_label(self, label: str=None):
+        if not label:
+            return None
+        
+        self.label.setText(label)
+
 
     def refresh(self):
         if self.pathFile:

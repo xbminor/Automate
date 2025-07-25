@@ -13,13 +13,8 @@ dictProjectNames = {
 }
 
 
-def extract_date(fileName: str):
-    """
-    Extracts MM.DD.YY from the fileName and returns a datetime object.
-    If no valid date is found, returns None.
-    """
-    match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{2})', fileName)
-    #match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{2})', fileName)
+def _extract_date(fileName: str):
+    match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{2,4})', fileName)
     if not match:
         return None
     month, day, year = match.groups()
@@ -29,41 +24,33 @@ def extract_date(fileName: str):
         return None
 
 
-def gui_bulk_file_index_by_date(pathFolderInput: str, startIndex: int = 1):
-    listFileNames = [f for f in os.listdir(pathFolderInput) if os.path.isfile(os.path.join(pathFolderInput, f))]
-
-    # Group files by date
+def gui_indexer(_pathInputFolder: str, _pathOutputFolder: str, _indexStart: int=1, _indexPrecision: int=2):
+    listFileNames = [f for f in os.listdir(_pathInputFolder) if os.path.isfile(os.path.join(_pathInputFolder, f))]
     dictGroupedFiles = defaultdict(list)
     for fileName in listFileNames:
-        dateObj = extract_date(fileName)
+        dateObj = _extract_date(fileName)
         if dateObj:
             dictGroupedFiles[dateObj].append(fileName)
         else:
             print(f"Skipping (no date found): {fileName}")
-
-
     sortedDates = sorted(dictGroupedFiles.keys())
-    totalGroups = len(sortedDates)
-    paddingLength = len(str(startIndex + totalGroups - 1))
 
-    plannedRenames = []
-    index = startIndex
+
+    index = _indexStart
     for date in sortedDates:
-        listFiles = sorted(dictGroupedFiles[date])
-        strIndex = str(index).zfill(paddingLength)
-        for fileName in listFiles:
-            if fileName.startswith(strIndex + "_"):
-                continue
-            newFileName = f"{strIndex}_{fileName}"
-            plannedRenames.append((fileName, newFileName))
+        for fileNameInput in sorted(dictGroupedFiles[date]):
+            indexFormatted = f"{index:0{_indexPrecision}}"
+            fileNameOutput = f"{indexFormatted}_{fileNameInput}"
+
+            pathInputFile = os.path.join(_pathInputFolder, fileNameInput)
+            pathOutputFile = os.path.join(_pathOutputFolder, fileNameOutput)
+
+            try:
+                shutil.copy2(pathInputFile, pathOutputFile)
+                print(f"Indexed: {fileNameInput} → {fileNameOutput}")
+            except Exception as e:
+                print(f"Failed to index {fileNameInput}: {e}")
         index += 1
-
-    if not plannedRenames:
-        print("No files to rename.")
-        return
-
-    for oldName, newName in plannedRenames:
-        os.rename(os.path.join(pathFolderInput, oldName), os.path.join(pathFolderInput, newName))
     
     print("Operation complete.")
 

@@ -349,19 +349,17 @@ def parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: st
 
 
 
-def gui_parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData: str,  pathLogParser: str):
-    allParsedData = []
-    
-    for sheet in xlsxSheets:
-        pathInputSheet = os.path.join(pathInputData, sheet)
+def gui_parser(_listExcel: list, _pathInputFolder: str, _pathOutputFolder: str,  _pathLogFile: str) -> None:
+    for sheet in _listExcel:
+        pathInputSheet = os.path.join(_pathInputFolder, sheet)
 
         try:
-            frame, header, employees = parse_cpr_xlsx_sheet(sheet, pathInputSheet, pathLogParser)
+            frame, header, employees = parse_cpr_xlsx_sheet(sheet, pathInputSheet, _pathLogFile)
             msg = f"<parse_cpr_xlsx_bulk> Parsed {len(employees)} employees from ({sheet})."
-            Util.log_message(Util.STATUS_CODES.PASS, msg, pathLogParser, True)
+            Util.log_message(Util.STATUS_CODES.PASS, msg, _pathLogFile, True)
         except Exception as e:
             msg = f"<parse_cpr_xlsx_bulk> Failed to parse ({sheet}): {e}."
-            Util.log_message(Util.STATUS_CODES.FAIL, msg, pathLogParser, True)
+            Util.log_message(Util.STATUS_CODES.FAIL, msg, _pathLogFile, True)
             continue
 
 
@@ -389,9 +387,6 @@ def gui_parse_cpr_xlsx_bulk(xlsxSheets: list, pathInputData: str, pathOutputData
             "employees": parsedEmployeeData
         }
 
-        with open(os.path.join(f"{pathOutputData}", f"Parsed_{sheet}.json"), "w") as parsedCPR:
+        baseName = os.path.splitext(sheet)[0]
+        with open(os.path.join(f"{_pathOutputFolder}", f"Parsed_{baseName}.json"), "w") as parsedCPR:
             json.dump(parsedData, parsedCPR, indent=2, ensure_ascii=False)
-
-        allParsedData.append(parsedData)
-
-    return allParsedData
