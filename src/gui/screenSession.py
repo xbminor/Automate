@@ -3,7 +3,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout,
 )
 from PySide6.QtCore import Qt, Signal, QFileSystemWatcher
-from pywinauto.application import Application
 from playwright.sync_api import sync_playwright
 
 import os, json, subprocess, time
@@ -162,6 +161,7 @@ class PanelSetup(QFrame):
             return
 
         try:
+            from pywinauto.application import Application
             app = Application(backend="uia").connect(title_re=".*LibreOffice.*", timeout=5)
             app.top_window().close()
             print("Sent close signal to LibreOffice window")
