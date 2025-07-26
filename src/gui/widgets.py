@@ -4,11 +4,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QFileSystemWatcher
 from PySide6.QtGui import QDragMoveEvent, QDragEnterEvent, QDropEvent
-import os
-import shutil
+import os, shutil, time
 import src.gui.style as Style
 
-from PySide6.QtCore import QSize
 
 
 def _copy_file_to_folder(pathFile: str, pathFolder: str) -> bool:
@@ -61,16 +59,46 @@ def _move_file_to_folder(_pathFile: str, _pathMoveToFolder: str):
         return False
     
 def _clear_folder(pathFolder):
-    if os.path.exists(pathFolder):
-        for fileName in os.listdir(pathFolder):
-            filePath = os.path.join(pathFolder, fileName)
-            if os.path.isfile(filePath):
-                try:
-                    os.remove(filePath)
-                except Exception as e:
-                    print(f"Failed to delete {filePath}: {e}")
-                
+    if not os.path.exists(pathFolder):
+        return None
+        
+    for fileName in os.listdir(pathFolder):
+        filePath = os.path.join(pathFolder, fileName)
+        if not os.path.isfile(filePath):
+            continue
+            
+        timeStart = time.time()
+        while time.time() - timeStart < 5:
+            try:
+                os.remove(filePath)
+                break
+            except PermissionError:
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Unexpected error deleting {filePath}: {e}")
+                break
+        else:
+            print(f"Timeout deleting {filePath}")
 
+
+def safe_move_file(pathFile, pathDstFolder):
+    if _is_file_ready(pathFile):
+        _move_file_to_folder(pathFile, pathDstFolder)
+    
+
+
+def _is_file_ready(pathFile, waitTime=0.5, retries=5):
+    sizeLast = -1
+    for _ in range(retries):
+        try:
+            sizeCurrent = os.path.getsize(pathFile)
+            if sizeCurrent == sizeLast:
+                return True
+            sizeLast = sizeCurrent
+        except:
+            pass
+        time.sleep(waitTime)
+    return False
 
 
 class ListDragDrop(QListWidget):
@@ -128,14 +156,7 @@ class ListDragDrop(QListWidget):
             os.startfile(self.pathFolder)
 
     def clear_folder(self):
-        if os.path.exists(self.pathFolder):
-            for fileName in os.listdir(self.pathFolder):
-                filePath = os.path.join(self.pathFolder, fileName)
-                if os.path.isfile(filePath):
-                    try:
-                        os.remove(filePath)
-                    except Exception as e:
-                        print(f"Failed to delete {filePath}: {e}")
+        _clear_folder(self.pathFolder)
 
     def move_to_folder(self, _pathMoveToFolder: str):
         if not os.path.exists(_pathMoveToFolder):

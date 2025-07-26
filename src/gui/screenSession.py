@@ -2,10 +2,12 @@ from PySide6.QtWidgets import (
     QWidget, QLabel, QFrame,
     QVBoxLayout, QHBoxLayout,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QFileSystemWatcher
+from pywinauto.application import Application
 from playwright.sync_api import sync_playwright
 
-import os, json
+import os, json, subprocess, time
+
 import src.gui.widgets as Widgets
 import src.gui.style as Style
 import src.automate as Automate
@@ -27,6 +29,7 @@ class PanelSetup(QFrame):
         self.pathJsonFolder = _pathJsonFolder
         self.pathInputFolder = _pathInputFolder
         self.pathLogFile = _pathLogFile
+        self.pathLastFileOpen = None
 
         self.widgetTitle = QLabel("Session Setup")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
@@ -109,6 +112,11 @@ class PanelSetup(QFrame):
 
 
     def load(self):
+        if self.get_project() == "": 
+            return
+
+        self.close_excel()
+    
         if not os.path.exists(self.pathExcelFolder) or not os.path.exists(self.pathJsonFolder):
             return None
         
@@ -126,15 +134,48 @@ class PanelSetup(QFrame):
         Widgets._move_file_to_folder(pathExcelFile, self.pathInputFolder)
         Widgets._move_file_to_folder(pathJsonFile, self.pathInputFolder)
 
+        pathFileToOpen = os.path.join(self.pathInputFolder, fileNameExcel)
+        possible_paths = [
+            r"C:\Program Files\LibreOffice\program\soffice.exe",
+            r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        ]
+        pathExcelProgram = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                pathExcelProgram = path
+
+        if not pathExcelProgram:
+            print("No excel program found")
+            return None
+        
+        try:
+            subprocess.Popen([pathExcelProgram, "--view", pathFileToOpen])
+            self.pathLastFileOpen = pathFileToOpen
+        except Exception as e:
+            print(f"Could not open Excel file: {e}")
+
         package = [self.get_project(), self.get_cpr()]
         self.signalProjectSelected.emit(package)
-        
+    
+    def close_excel(self):
+        if self.pathLastFileOpen is None:
+            return
+
+        try:
+            app = Application(backend="uia").connect(title_re=".*LibreOffice.*", timeout=5)
+            app.top_window().close()
+            print("Sent close signal to LibreOffice window")
+        except Exception as e:
+            print(f"Could not gracefully close LibreOffice: {e}")
+
+        self.pathLastFileOpen = None
+
 
 
 
 
 class PanelSession(QFrame):
-    def __init__(self, _pathInputFolder: str, _pathOutputFolder: str, _pathLogFile: str):
+    def __init__(self, _pathInputFolder: str, _pathOutputFolder: str, _pathMoveToRenamer: str, _pathLogFile: str):
         super().__init__()
         self.setObjectName("Panel")
         self.setStyleSheet(Style.FRAME_PANEL)
@@ -145,7 +186,15 @@ class PanelSession(QFrame):
         self.sessionEntryData = None
         self.pathInputFolder = _pathInputFolder
         self.pathOutputFolder = _pathOutputFolder
+        self.pathMoveToRenamer = _pathMoveToRenamer
         self.pathLogFile = _pathLogFile
+
+        self.pathDownloadsFolder = os.path.join(os.path.expanduser("~"), "Downloads")
+        self.filesDownloadsContentOld = set(os.listdir(self.pathDownloadsFolder))
+
+        self.watcherDownloads = QFileSystemWatcher()
+        self.watcherDownloads.addPath(self.pathDownloadsFolder)
+        self.watcherDownloads.directoryChanged.connect(self.on_file_added_to_downloads)
 
         self.widgetTitle = QLabel("Automation Sessions")
         self.widgetTitle.setAlignment(Qt.AlignCenter)
@@ -161,6 +210,8 @@ class PanelSession(QFrame):
         self.widgetOutputList = Widgets.ListDragDrop(self.pathOutputFolder, (240, 240))
         self.widgetOutputBtnClear = Widgets.Button(self.widgetOutputList.clear_folder, "Clear Folder", (90,30))
         self.widgetOutputBtnOpen = Widgets.Button(self.widgetOutputList.open_folder, "Open Folder", (90,30))
+
+        self.widgetOutputBtnMoveRenamer = Widgets.Button(lambda: self.widgetOutputList.move_to_folder(self.pathMoveToRenamer), "Move To Renamer", (110,30))
 
         self.setup_ui()
 
@@ -193,8 +244,8 @@ class PanelSession(QFrame):
         layoutOutputButtons.addStretch()
         layoutOutputButtons.addWidget(self.widgetOutputBtnOpen, alignment=Qt.AlignRight)
         layoutOutput.addLayout(layoutOutputButtons)
-        
         layout.addLayout(layoutOutput)
+        layout.addWidget(self.widgetOutputBtnMoveRenamer)
         self.setLayout(layout)
 
 
@@ -240,35 +291,45 @@ class PanelSession(QFrame):
         self.configCPRId = self.cprToOpen
         self.configNonWork = False
 
+    def on_file_added_to_downloads(self):
+        filesDownloadsContentNew = set(os.listdir(self.pathDownloadsFolder))
+        fileDiff = filesDownloadsContentNew - self.filesDownloadsContentOld
+
+        for fileName in fileDiff:
+            pathFile = os.path.join(self.pathDownloadsFolder, fileName)
+            Widgets.safe_move_file(pathFile, self.pathOutputFolder)
+
 
     def run(self):
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=False)
-            context = browser.new_context(
-            viewport={"width":1280, "height":1440},
-            # viewport={"width":960, "height":1080},
-            # record_video_dir="videos",
-            # record_video_size={"width":960, "height":1080}
-            )
-            page = context.new_page()
-            page.goto("https://services.dir.ca.gov/gsp")
+        print("run")
+        
+        # with sync_playwright() as playwright:
+        #     browser = playwright.chromium.launch(headless=False)
+        #     context = browser.new_context(
+        #     viewport={"width":1280, "height":1440},
+        #     # viewport={"width":960, "height":1080},
+        #     # record_video_dir="videos",
+        #     # record_video_size={"width":960, "height":1080}
+        #     )
+        #     page = context.new_page()
+        #     page.goto("https://services.dir.ca.gov/gsp")
 
-            Automate.s0_log_in(page, self.configUser, self.configPass, self.pathLogFile)
-            Automate.s1_dismiss_announcement(page, self.pathLogFile)
+        #     Automate.s0_log_in(page, self.configUser, self.configPass, self.pathLogFile)
+        #     Automate.s1_dismiss_announcement(page, self.pathLogFile)
 
-            if self.configIsOpen:
-                Automate.s1_project_dir_cpr_view(page, self.configDIR, self.pathLogFile)
-                Automate.s2_cpr_index_id_open(page, self.configCPRId, self.pathLogFile)
-            else:
-                Automate.s1_project_dir_cpr_new(page, self.configDIR, self.pathLogFile)
+        #     if self.configIsOpen:
+        #         Automate.s1_project_dir_cpr_view(page, self.configDIR, self.pathLogFile)
+        #         Automate.s2_cpr_index_id_open(page, self.configCPRId, self.pathLogFile)
+        #     else:
+        #         Automate.s1_project_dir_cpr_new(page, self.configDIR, self.pathLogFile)
     
-            if self.configNonWork:
-                Automate.s3_cpr_fill_non_work(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
-            else:
-                Automate.s3_cpr_fill(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
+        #     if self.configNonWork:
+        #         Automate.s3_cpr_fill_non_work(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
+        #     else:
+        #         Automate.s3_cpr_fill(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
 
-            context.close()
-            browser.close()
+        #     context.close()
+        #     browser.close()
     
         
 
@@ -282,8 +343,8 @@ class ScreenSession(QWidget):
         self.pathRenamerInputFolder = _pathRenamer / "input"
         self.pathLogFile = _pathLogFile
     
-        self.widgetPanelSetup = PanelSetup(self.pathSessionExcelFolder, self.pathSessionJsonFolder, self.pathSessionInputFolder, self.pathLogFile)
-        self.widgetPanelSession = PanelSession(self.pathSessionInputFolder, self.pathSessionOutputFolder, self.pathLogFile)
+        self.widgetPanelSetup = PanelSetup(self.pathSessionExcelFolder, self.pathSessionJsonFolder, self.pathRenamerInputFolder, self.pathLogFile)
+        self.widgetPanelSession = PanelSession(self.pathSessionInputFolder, self.pathSessionOutputFolder, self.pathRenamerInputFolder, self.pathLogFile)
 
         self.widgetPanelSetup.signalProjectSelected.connect(self.widgetPanelSession.set_session_config)
 

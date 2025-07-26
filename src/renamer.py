@@ -19,7 +19,10 @@ def _extract_date(fileName: str):
         return None
     month, day, year = match.groups()
     try:
-        return datetime.strptime(f"{month}.{day}.{year}", "%m.%d.%y")
+        if len(year) == 2:
+            return datetime.strptime(f"{month}.{day}.{year}", "%m.%d.%y")
+        else:
+            return datetime.strptime(f"{month}.{day}.{year}", "%m.%d.%Y")
     except ValueError:
         return None
 
