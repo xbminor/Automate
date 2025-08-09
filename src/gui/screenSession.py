@@ -301,35 +301,33 @@ class PanelSession(QFrame):
 
 
     def run(self):
-        print("run")
-        
-        # with sync_playwright() as playwright:
-        #     browser = playwright.chromium.launch(headless=False)
-        #     context = browser.new_context(
-        #     viewport={"width":1280, "height":1440},
-        #     # viewport={"width":960, "height":1080},
-        #     # record_video_dir="videos",
-        #     # record_video_size={"width":960, "height":1080}
-        #     )
-        #     page = context.new_page()
-        #     page.goto("https://services.dir.ca.gov/gsp")
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=False)
+            context = browser.new_context(
+            viewport={"width":1280, "height":1440},
+            # viewport={"width":960, "height":1080},
+            # record_video_dir="videos",
+            # record_video_size={"width":960, "height":1080}
+            )
+            page = context.new_page()
+            page.goto("https://services.dir.ca.gov/gsp")
 
-        #     Automate.s0_log_in(page, self.configUser, self.configPass, self.pathLogFile)
-        #     Automate.s1_dismiss_announcement(page, self.pathLogFile)
+            Automate.s0_log_in(page, self.configUser, self.configPass, self.pathLogFile)
+            Automate.s1_dismiss_announcement(page, self.pathLogFile)
 
-        #     if self.configIsOpen:
-        #         Automate.s1_project_dir_cpr_view(page, self.configDIR, self.pathLogFile)
-        #         Automate.s2_cpr_index_id_open(page, self.configCPRId, self.pathLogFile)
-        #     else:
-        #         Automate.s1_project_dir_cpr_new(page, self.configDIR, self.pathLogFile)
+            if self.configIsOpen:
+                Automate.s1_project_dir_cpr_view(page, self.configDIR, self.pathLogFile)
+                Automate.s2_cpr_index_id_open(page, self.configCPRId, self.pathLogFile)
+            else:
+                Automate.s1_project_dir_cpr_new(page, self.configDIR, self.pathLogFile)
     
-        #     if self.configNonWork:
-        #         Automate.s3_cpr_fill_non_work(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
-        #     else:
-        #         Automate.s3_cpr_fill(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
+            if self.configNonWork:
+                Automate.s3_cpr_fill_non_work(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
+            else:
+                Automate.s3_cpr_fill(page, self.configPrime, self.configPrimeName, self.sessionEntryData, self.pathLogFile)
 
-        #     context.close()
-        #     browser.close()
+            context.close()
+            browser.close()
     
         
 
@@ -343,7 +341,7 @@ class ScreenSession(QWidget):
         self.pathRenamerInputFolder = _pathRenamer / "input"
         self.pathLogFile = _pathLogFile
     
-        self.widgetPanelSetup = PanelSetup(self.pathSessionExcelFolder, self.pathSessionJsonFolder, self.pathRenamerInputFolder, self.pathLogFile)
+        self.widgetPanelSetup = PanelSetup(self.pathSessionExcelFolder, self.pathSessionJsonFolder, self.pathSessionInputFolder, self.pathLogFile)
         self.widgetPanelSession = PanelSession(self.pathSessionInputFolder, self.pathSessionOutputFolder, self.pathRenamerInputFolder, self.pathLogFile)
 
         self.widgetPanelSetup.signalProjectSelected.connect(self.widgetPanelSession.set_session_config)

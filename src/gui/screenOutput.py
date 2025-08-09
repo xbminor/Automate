@@ -82,7 +82,7 @@ class PanelRenamer(QFrame):
             text = self.widgetInputField.input.text().strip()
             if not text.isdigit():
                 return None
-            gui_bulk_cpr_index_by_order(self.pathInputFolder, int(text))
+            gui_bulk_cpr_index_by_order(self.pathInputFolder, int(text), 2)
 
 
 
