@@ -45,6 +45,9 @@ class PanelSetup(QFrame):
             "Parlier High - BMY Construction Group, Inc.",
             "Parlier Jr - BMY Construction Group, Inc.",
             "Avenal Tamarack - BMY Construction Group, Inc.",
+            "Orosi Aquatics - Anaya Construction",
+            "2 Water Booster - City of Fresno",
+            "Rotary West Wrought Iron - City of Fresno"
         ]
         self.widgetComboxProject = Widgets.Combox(projectTextLabel, projectTextTemp, listTextProject, (90, 30))
 
