@@ -26,6 +26,17 @@ FRINGE_RATES = [
                     "oth": "0.32"
                 }
             },
+            {
+                "start": date(2025, 7, 1),
+                "end": date(2026, 6, 30),
+                "rates": {
+                    "hnw": "11.10",
+                    "pen": "15.31",
+                    "vac": "3.91",
+                    "trn": "0.52",
+                    "oth": "0.32"
+                }
+            },
         ]
 
 
@@ -275,7 +286,8 @@ def s3_cpr_fill(page: Page, primeId: str, primeName: str, data: dict, logPath: s
         page.get_by_role("link", name="Lookup using list").click()
         page.get_by_label("", exact=True).fill(primeId)
 
-        page.get_by_role("option", name=primeName).click()
+        #page.get_by_role("option", name=primeName).click()
+        page.wait_for_timeout(4000)
         msg = f"<s3_cpr_fill_from_open> Contract with ({primeName}) as ({primeId})."
         Util.log_message(Util.STATUS_CODES.LOG, msg, logPath, True)
 
@@ -446,7 +458,7 @@ def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, c
         _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
         isFringe = False
     
-    elif payrollInfo["work_classification"] == "Cement Mason":
+    elif payrollInfo["work_classification"] == "Cement Mason" or payrollInfo["work_classification"] == "CM" or payrollInfo["work_classification"] == "CM Journeyman":
         _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Cement Mason")
         _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Cement Mason -")
         _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
@@ -476,6 +488,14 @@ def _fillEmployeePayrollClass(page: Page, payroll: list[dict], weekStart: str, c
 
 
         isFringe = True if payroll["employee_name"] == "Nathan A Hayes" else False
+
+    elif payrollInfo["work_classification"] == "Operators Foreman":
+        _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Operating Engineer")
+        _combox_select_option(sectionWorkClass, f"Classification paid {countClasses+1}:", "Other (Please specify)")
+        texboxClass = sectionWorkClass.get_by_text("Other Classification (Please specify):") 
+        texboxClass.fill("Foreman")
+        _combox_select_option(sectionWorkClass, "Level:", "Journeyman")
+        isFringe = True
     
     elif payrollInfo["work_classification"] == "Supervisor":
         _combox_select_option(sectionWorkClass, f"Craft paid {countClasses+1}:", "Laborer and Related Classifications")

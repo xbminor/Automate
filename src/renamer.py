@@ -11,6 +11,9 @@ dictProjectNames = {
     "496589" : "Parlier High",
     "493551" : "Avenal Tamarack",
     "509826": "Fowler Marshall",
+    "511281" : "Orosi Aquatics",
+    "20250568690" : "Fresno Water Booster",
+    "20240558031" : "Fresno Rotary West Wrought Iron"
 }
 
 
